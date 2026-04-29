@@ -12,7 +12,7 @@ POLL_EVERY = 5
 STATE_FILE = ".syncrhonite_state.json"
 
 def load_state() -> dict:
-    path = Path(SAVE_DIR) / STATE_FILE # What does this do?
+    path = Path(SAVE_DIR) / STATE_FILE 
     if path.exists():
         return json.loads(path.read_text())
     return {}
@@ -22,11 +22,11 @@ def save_state(state: dict) -> None:
     path.write_text(json.dumps(state, indent=2))
 
 def hash_file(filepath: str) -> str:
-    h = hashlib.md5() # What does this do?
-    with open(filepath, "rb") as f: # What does this do?
-        for chunk in iter(lambda: f.read(8192), b""): # What?
+    h = hashlib.md5()
+    with open(filepath, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
           h.update(chunk)
-    return h.hexdigest() # ?
+    return h.hexdigest()
 
 def post_file(file_path: str, file_name: str) -> bool:
     """Upload a save file to the server. Return true on success."""
