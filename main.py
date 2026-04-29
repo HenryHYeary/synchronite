@@ -56,4 +56,12 @@ def post_file(filepath: str, filename: str) -> bool:
         print(f"Upload failed for {filename}: {e}")
         return False
 
- 
+def get_remote_saves() -> list[dict]:
+    """Ask the server for all of the saves it is aware of on this device."""
+    url = f"{SERVER_URL}/saves?device={DEVICE_NAME}"
+    try:
+        with request.urlopen(url, timeout=10) as res:
+            return json.loads(res.read())
+    except error.URLError as e:
+        print(f"Could not reach server: {e}")
+        return []
