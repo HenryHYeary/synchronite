@@ -65,3 +65,58 @@ def get_remote_saves() -> list[dict]:
     except error.URLError as e:
         print(f"Could not reach server: {e}")
         return []
+
+def download_file(save_id: str, dest_path: str) -> bool:
+    """Download a save file from the server."""
+    url = f"{SERVER_URL}/saves/{save_id}/download"
+    try:
+        with request.urlopen(url, timeout=10) as res:
+            Path(dest_path).write_bytes(res.read())
+        return True
+    except error.URLError as e:
+        print(f"Download failed: {e}")
+        return False
+
+def scan_saves() -> dict[str, str]:
+    """Return { filename, hash } for all save files in SAVE_DIR."""
+    saves = {}
+    for ext in ("*.srm", "*.sav", "*.state", "*.mcr"):
+        for path in Path(SAVE_DIR).glob(ext):
+            if path.name == STATE_FILE:
+                continue
+            saves[path.name] = hash_file(str(path))
+    return saves
+
+def sync_on_startup(state: dict) -> dict:
+    """
+    On startup pull down anything from the server that's newer
+    than what is stored locally.
+    """
+    print("Checking for remote saves.")
+    remote_saves = get_remote_saves()
+    if not remote_saves:
+        return state
+
+    for remote in remote_saves:
+        filename = remote["filename"]
+        save_id = remote["id"]
+        dest_path = Path(str(SAVE_DIR) / filename)
+        local_exists = Path(dest_path).exists()
+
+        if not local_exists:
+            print(f"Downloading new save: {filename}")
+            if download_file(dest_path, save_id):
+                state[filename] = hash_file(dest_path)
+    
+    return state
+
+def check_for_changes(state: dict) -> dict:
+    """
+    Scan the save directory, upload anything that changed since last check.
+    Return updated save.
+    """
+    current = scan_saves()
+
+    for filename, hash in current.items():
+        last_hash = state.get(filename)
+        
