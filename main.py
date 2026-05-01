@@ -117,6 +117,40 @@ def check_for_changes(state: dict) -> dict:
     """
     current = scan_saves()
 
-    for filename, hash in current.items():
+    for filename, current_hash in current.items():
         last_hash = state.get(filename)
         
+        if last_hash is None:
+            print(f"New save filedetected: {filename}")
+            if post_file(str(Path(SAVE_DIR) / filename), filename):
+                state[filename] = current_hash
+    
+    return state
+
+def main():
+    print("Synchronite agent starting...")
+    print(f"Watching: {SAVE_DIR}")
+    print(f"Server: {SERVER_URL}")
+    print(f"Device: {DEVICE_NAME}\n")
+
+    if not Path(SAVE_DIR).exists():
+        print(f"Save directory not found: {SAVE_DIR}")
+        return
+    
+    state = load_state()
+    state = sync_on_startup(state)
+    save_state(state)
+
+    print(f"Watching for saves every {POLL_EVERY}s (Ctrl + C to stop)\n")
+    try:
+        while True:
+            state = check_for_changes(state)
+            save_state(state)
+            time.sleep(POLL_EVERY)
+    except KeyboardInterrupt:
+        print("\nAgent stopped.")
+        save_state(state)
+
+if __name__ == "__main__":
+    main()
+
