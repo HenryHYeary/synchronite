@@ -5,7 +5,7 @@ import json
 from urllib import request, error
 from pathlib import Path
 
-SAVE_DIR = os.path.expanduser("~/Retroarch/saves")
+SAVE_DIR = os.path.expanduser("~/Documents/RetroArch/saves")
 SERVER_URL = "http://localhost:8000"
 DEVICE_NAME = "my-retroid"
 POLL_EVERY = 5
