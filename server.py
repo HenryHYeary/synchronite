@@ -60,6 +60,10 @@ async def upload_save(
     return { "status": "ok", "id": save_id }
 
 @app.get("/saves")
-def list_saves(device: str | None = None, save_type: str | None = None):
+def list_saves(device: str | None = None, save_type: str | None = None) -> list[dict]:
     index = load_index()
-    
+    if device:
+        index = [s for s in index if s["device"] == device]
+    if save_type:
+        index = [s for s in index if s.get("save_type") == save_type]
+    return [{k: v for k, v in s.items() if k != "stored_name"} for s in index]
