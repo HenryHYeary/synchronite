@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi.responses import FileResponse
 
 UPLOAD_DIR = Path("./server_saves")
 INDEX_FILE = UPLOAD_DIR / "index.json"
@@ -67,3 +68,25 @@ def list_saves(device: str | None = None, save_type: str | None = None) -> list[
     if save_type:
         index = [s for s in index if s.get("save_type") == save_type]
     return [{k: v for k, v in s.items() if k != "stored_name"} for s in index]
+
+@app.get("/saves/{save_id}/download")
+def download_save(save_id: str):
+    index = load_index()
+    record = next((s for s in index if s["id"] == save_id), None)
+
+    if not record:
+        raise HTTPException(status_code=404, detail="Save not found")
+
+    path = UPLOAD_DIR / record["stored_name"]
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="File missing on disk")
+
+    return FileResponse(
+        path,
+        media_type="application/octet-stream",
+        filename=record["filename"]
+    )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("Synchronite", host="0.0.0.0", port=3000, reload=True)
