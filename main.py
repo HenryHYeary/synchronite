@@ -5,11 +5,11 @@ import json
 from urllib import request, error
 from pathlib import Path
 
-SAVE_DIR = os.path.expanduser("~/Documents/RetroArch/saves")
+SAVE_DIR = os.path.expanduser("~/Documents/RetroArch/saves/mGBA")
 SERVER_URL = "http://localhost:8000"
 DEVICE_NAME = "my-retroid"
 POLL_EVERY = 5
-STATE_FILE = ".syncrhonite_state.json"
+STATE_FILE = ".synchronite_state.json"
 
 def load_state() -> dict:
     path = Path(SAVE_DIR) / STATE_FILE 
@@ -34,14 +34,18 @@ def post_file(filepath: str, filename: str) -> bool:
     with open(filepath, "rb") as f:
         data = f.read()
 
-    boundary = "----SynchroniteBoundary"
-    body = (
-        f"--{boundary}\r\n"
-        f'Content-Disposition: form-data name; name="device"\r\n\r\n'
-        f"{DEVICE_NAME}\r\n"
-        f'Content-Disposition: form-data; name="file"; filename={filename}\r\n'
-        f'Content-Type: application/octet-stream\r\n\r\n'
-    ).encode() + data + f"\r\n--{boundary}--\r\n".encode()
+        boundary = "----RetroSyncBoundary"
+        body = (
+            f"--{boundary}\r\n"
+            f'Content-Disposition: form-data; name="device"\r\n\r\n'
+            f"{DEVICE_NAME}\r\n"
+            f"--{boundary}\r\n"
+            f'Content-Disposition: form-data; name="save_type"\r\n\r\n'  
+            f"sram\r\n"                                                   
+            f"--{boundary}\r\n"
+            f'Content-Disposition: form-data; name="file"; filename="{filename}"\r\n'
+            f"Content-Type: application/octet-stream\r\n\r\n"
+        ).encode() + data + f"\r\n--{boundary}--\r\n".encode()
 
     req = request.Request(
         url,
@@ -81,7 +85,7 @@ def scan_saves() -> dict[str, str]:
     """Return { filename, hash } for all save files in SAVE_DIR."""
     saves = {}
     for ext in ("*.srm", "*.sav", "*.state", "*.mcr"):
-        for path in Path(SAVE_DIR).glob(ext):
+        for path in Path(SAVE_DIR).rglob(ext):
             if path.name == STATE_FILE:
                 continue
             saves[path.name] = hash_file(str(path))
@@ -121,7 +125,7 @@ def check_for_changes(state: dict) -> dict:
         last_hash = state.get(filename)
         
         if last_hash is None:
-            print(f"New save filedetected: {filename}")
+            print(f"New save file detected: {filename}")
             if post_file(str(Path(SAVE_DIR) / filename), filename):
                 state[filename] = current_hash
     

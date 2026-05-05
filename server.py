@@ -21,10 +21,11 @@ def save_index(index: list[dict]) -> None:
 
 app = FastAPI(title="Synchronite", version="0.2.0")
 
-@app.post("saves/upload")
+@app.post("/saves/upload")
 async def upload_save(
     device: str = Form(...),
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    save_type: str = Form(default="sram")
 ):
     data = await file.read()
     index = load_index()
@@ -89,4 +90,4 @@ def download_save(save_id: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("Synchronite", host="0.0.0.0", port=3000, reload=True)
+    uvicorn.run("server:app", host="127.0.0.1", port=8000, reload=True)

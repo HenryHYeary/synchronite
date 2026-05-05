@@ -1,0 +1,4 @@
+server_saves
+uploads
+.venv
+__pycache__
