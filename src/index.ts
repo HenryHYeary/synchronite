@@ -1,0 +1,1 @@
+import { loadConfig } from "./config";

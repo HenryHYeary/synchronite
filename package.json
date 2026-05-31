@@ -1,0 +1,29 @@
+{
+  "name": "synchronite",
+  "version": "1.0.0",
+  "description": "Enables cloud save syncs in a device-agnostic format",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "watch": "tsc -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HenryHYeary/synchronite.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/HenryHYeary/synchronite/issues"
+  },
+  "homepage": "https://github.com/HenryHYeary/synchronite#readme",
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  }
+}
