@@ -11,7 +11,7 @@ if (command == "init") {
   runInit();
 } else {
   if (!fs.existsSync(APP_PATHS.config)) {
-    console.error("No config found. Run `retrosync init` first.");
+    console.error("No config found. Run `synchronite init` first.");
     process.exit(1);
   }
 
