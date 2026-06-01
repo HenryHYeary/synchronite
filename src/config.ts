@@ -1,5 +1,6 @@
 import { z } from "zod";
 import fs from "fs";
+import { APP_PATHS } from "./paths";
 
 export const ConfigSchema = z.object({
   retroarchSaveDir: z.string(),
@@ -13,12 +14,12 @@ export const ConfigSchema = z.object({
 export type Config = z.infer<typeof ConfigSchema>;
 
 
-export function loadConfig(filePath: string): Config {
+export function loadConfig(filePath: string = APP_PATHS.config): Config {
   const raw = JSON.parse(fs.readFileSync(filePath, "utf-8"));
   const result = ConfigSchema.safeParse(raw);
 
   if (!result.success) {
-    console.error("Invalid config:\n", result.error.format());
+    console.error("Invalid config:\n", z.treeifyError(result.error));
     process.exit(1);
   }
 
