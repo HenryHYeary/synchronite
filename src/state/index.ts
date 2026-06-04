@@ -1,4 +1,5 @@
 import { APP_PATHS } from "../paths";
+import fg from "fast-glob";
 import fs from "fs";
 
 interface FileRecord {
@@ -16,4 +17,11 @@ export function loadIndex(): SyncIndex {
 
 export function saveIndex(index: SyncIndex) {
   fs.writeFileSync(APP_PATHS.index, JSON.stringify(index, null, 2));
+}
+
+export async function findFilesByExt(dir: string, ext: string): Promise<string[]> {
+  const pattern = `${dir}/**/*${ext}`;
+  const files = await fg(pattern, { onlyFiles: true });
+
+  return files;
 }
