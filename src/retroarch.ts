@@ -1,11 +1,12 @@
 import os from "os";
 import path from "path";
-import fs from "fs";
 
-function getDefaultRetroarchPaths(): {
+export interface Paths {
   saves: string,
   states: string,
-} {
+}
+
+export function getDefaultRetroarchPaths(): Paths {
   const home = os.homedir();
 
   switch (process.platform) {
@@ -26,16 +27,4 @@ function getDefaultRetroarchPaths(): {
       }
     }
   }
-}
-
-export function detectRetroarchPaths(): {
-  saves: string | null,
-  states: string | null,
-} {
-  const defaults = getDefaultRetroarchPaths();
-
-  return {
-    saves: fs.existsSync(defaults.saves) ? defaults.saves : null,
-    states: fs.existsSync(defaults.states) ? defaults.states : null,
-  };
 }

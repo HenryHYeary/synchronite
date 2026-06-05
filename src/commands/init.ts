@@ -1,18 +1,17 @@
 import * as p from "@clack/prompts";
 import fs from "fs";
-import path from "path";
-import { detectRetroarchPaths } from "../retroarch";
+import { getDefaultRetroarchPaths, Paths } from "../retroarch";
 import { APP_PATHS } from "../paths";
 
 export async function runInit(): Promise<void> {
   p.intro("Synchronite setup");
 
-  const detected = detectRetroarchPaths();
+  const defaults: Paths = getDefaultRetroarchPaths();
 
   const saves = await p.text({
     message: "RetroArch saves directory",
-    placeholder: detected.saves ?? "No default found - enter path manually",
-    initialValue: detected.saves ?? "",
+    placeholder: defaults.saves ?? "No defaults found - enter path manually",
+    initialValue: defaults.saves ?? "",
     validate(value) {
       if (!value) return "Saves path is required";
       if (!fs.existsSync(value)) return "Directory does not exist";
@@ -21,8 +20,8 @@ export async function runInit(): Promise<void> {
 
   const states = await p.text({
     message: "RetroArch states directory",
-    placeholder: detected.states ?? "No default found - enter path manually",
-    initialValue: detected.saves ?? "",
+    placeholder: defaults.states ?? "No defaults found - enter path manually",
+    initialValue: defaults.saves ?? "",
     validate(value) {
       if (!value) return "States path is required";
       if (!fs.existsSync(value)) return "Directory does not exist";
