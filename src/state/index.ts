@@ -11,6 +11,12 @@ interface FileRecord {
   size: number
 }
 
+export interface IndexDiff {
+  added: string[];
+  modified: string[];
+  deleted: string[];
+}
+
 const SAVE_PATTERNS = ["**/*.srm", "**/*.sav", "**/*.srm.bak"];
 const STATE_PATTERNS = ["**/*.state", "**/*.state[0-9]", "**/*.state[0-9][0-9]"];
 
@@ -64,4 +70,26 @@ export async function generateIndex(savesDir: string, statesDir: string): Promis
   }
 
   return index;
+}
+
+export function diffIndex(oldIndex: SyncIndex, newIndex: SyncIndex): IndexDiff {
+  const added: string[] = [];
+  const modified: string[] = [];
+  const deleted: string[] = [];
+
+  for (const [path, record] of Object.entries(newIndex)) {
+    if (!oldIndex[path]) {
+      added.push(path);
+    } else if (oldIndex[path].hash !== record.hash) {
+      modified.push(path);
+    }
+  }
+
+  for (const path of Object.keys(newIndex)) {
+    if (!newIndex[path]) {
+      deleted.push(path);
+    }
+  }
+
+  return { added, modified, deleted };
 }

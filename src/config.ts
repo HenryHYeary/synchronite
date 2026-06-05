@@ -8,7 +8,7 @@ export const ConfigSchema = z.object({
   cloudProvider: z.enum(["s3", "gdrive", "dropbox"]),
   cloudConfig: z.record(z.string(), z.string()),
   syncIntervalMs: z.number().positive().default(5000),
-  conflictStrategy: z.enum(["latest-wins", "prompt"]).default("latest-wins"),
+  modificationStrategy: z.enum(["latest-wins", "prompt"]).default("latest-wins"),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

@@ -48,7 +48,7 @@ export async function runInit(): Promise<void> {
     cloudProvider: provider,
     cloudConfig: {},
     syncIntervalMs: 5000,
-    conflictStrategy: "latest-wins",
+    modificationStrategy: "latest-wins",
   };
 
   fs.writeFileSync(APP_PATHS.config, JSON.stringify(config, null, 2));
