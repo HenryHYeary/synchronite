@@ -6,9 +6,13 @@ import fs from "fs";
 
 interface FileRecord {
   hash: string;
-  lastModified: string;
+  lastModified: number;
   lastSynced: number | null;
+  size: number
 }
+
+const SAVE_PATTERNS = ["**/*.srm", "**/*.sav", "**/*.srm.bak"];
+const STATE_PATTERNS = ["**/*.state", "**/*.state[0-9]", "**/*.state[0-9][0-9]"];
 
 type SyncIndex = Record<string, FileRecord>
 
@@ -24,29 +28,38 @@ export function saveIndex(index: SyncIndex) {
   fs.writeFileSync(APP_PATHS.index, JSON.stringify(index, null, 2));
 }
 
-async function findFilesByExt(dir: string, ext: string): Promise<string[]> {
-  return fg(`${dir}/**/*${ext}`, { onlyFiles: true });
+async function findFiles(dir: string, patterns: string[]): Promise<string[]> {
+  return fg(patterns.map(p => `${dir}/${p}`), { onlyFiles: true });
 }
 
 export async function generateIndex(savesDir: string, statesDir: string): Promise<SyncIndex> {
   const [saveFilePaths, stateFilePaths] = await Promise.all([
-    findFilesByExt(savesDir, ".srm"),
-    findFilesByExt(statesDir, ".state"),
+    findFiles(savesDir, SAVE_PATTERNS),
+    findFiles(statesDir, STATE_PATTERNS),
   ]);
 
   const existingIndex = loadIndex();
   const index: SyncIndex = {};
 
   for (const file of [...saveFilePaths, ...stateFilePaths]) {
-    const [stat, content] = await Promise.all([
-      fs.promises.stat(file),
-      fs.promises.readFile(file),
-    ]);
+    const stat = await fs.promises.stat(file);
+    const existing = existingIndex[file];
 
+    if (
+      existing &&
+      stat.mtimeMs === existing.lastModified &&
+      stat.size === existing.size
+    ) {
+      index[file] = existing;
+      continue;
+    }
+
+    const content = await fs.promises.readFile(file);
     index[file] = {
       hash: crypto.createHash("sha256").update(content).digest("hex"),
-      lastModified: stat.mtime.toISOString(),
-      lastSynced: existingIndex[file]?.lastSynced ?? null,
+      lastModified: stat.mtimeMs,
+      lastSynced: existing?.lastSynced ?? null,
+      size: stat.size,
     };
   }
 
