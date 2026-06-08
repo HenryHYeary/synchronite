@@ -21,7 +21,7 @@ export async function runInit(): Promise<void> {
   const states = await p.text({
     message: "RetroArch states directory",
     placeholder: defaults.states ?? "No defaults found - enter path manually",
-    initialValue: defaults.saves ?? "",
+    initialValue: defaults.states ?? "",
     validate(value) {
       if (!value) return "States path is required";
       if (!fs.existsSync(value)) return "Directory does not exist";
