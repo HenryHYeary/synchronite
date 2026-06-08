@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Enables cloud save syncs in a device-agnostic format",
   "main": "index.js",
+  "bin": {
+    "synchronite": "./dist/index.js"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",

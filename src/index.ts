@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { ensureAppDirs, APP_PATHS } from "./paths";
 import { loadConfig } from "./config";
 import { runInit } from "./commands/init";
