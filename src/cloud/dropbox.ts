@@ -61,6 +61,7 @@ export class DropboxAdapter implements CloudAdapter {
         contentHash: entry.content_hash,
       })
     );
+    // TODO: check has_more for pagination after GUI is created for this app.
   }
 
   async deleteRemote(remotePath: string): Promise<void> {
