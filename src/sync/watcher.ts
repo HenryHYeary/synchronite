@@ -1,6 +1,7 @@
 import chokidar from "chokidar";
-import { loadConfig } from "../config";
-import { generateIndex, saveIndex } from "../state";
+import { Config } from "../config";
+import { loadIndex } from "../state";
+import fs from "fs";
 
 const WATCH_PATTERNS = [
     "**/*.srm",
@@ -10,25 +11,22 @@ const WATCH_PATTERNS = [
     "**/*.state[0-9]",
 ];
 
-const config = loadConfig();
-
-const watcher = chokidar.watch(
+export async function runWatcher(config: Config) {
+  const watcher = chokidar.watch(
     WATCH_PATTERNS.flatMap(pattern => [
-        `${config.retroarchSaveDir}/${pattern}`,
-        `${config.retroarchStateDir}/${pattern}`,
+      `${config.retroarchSaveDir}/${pattern}`,
+      `${config.retroarchStateDir}/${pattern}`,
     ]),
-   { 
+    { 
         persistent: true,
         awaitWriteFinish: {
-            stabilityThreshold: 500,
-            pollInterval: 100,
-        }
+        stabilityThreshold: 500,
+        pollInterval: 100,
+      }
     },
-);
+  );
 
-
-// Unsure of this
-watcher.on("add", async () => {
-    const index = await generateIndex(config.retroarchSaveDir, config.retroarchStateDir);
-    saveIndex(index);
-})
+  watcher.on("add", (path) => {
+    const index = loadIndex();
+  });
+}
