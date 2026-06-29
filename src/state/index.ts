@@ -44,32 +44,34 @@ export async function generateIndex(savesDir: string, statesDir: string): Promis
     findFiles(statesDir, STATE_PATTERNS),
   ]);
 
-  const existingIndex = loadIndex();
-  const index: SyncIndex = {};
+  const index = loadIndex();
 
-  for (const file of [...saveFilePaths, ...stateFilePaths]) {
-    const stat = await fs.promises.stat(file);
-    const existing = existingIndex[file];
-
-    if (
-      existing &&
-      stat.mtimeMs === existing.lastModified &&
-      stat.size === existing.size
-    ) {
-      index[file] = existing;
-      continue;
-    }
-
-    const content = await fs.promises.readFile(file);
-    index[file] = {
-      hash: crypto.createHash("sha256").update(content).digest("hex"),
-      lastModified: stat.mtimeMs,
-      lastSynced: existing?.lastSynced ?? null,
-      size: stat.size,
-    };
-  }
+  await Promise.all([...saveFilePaths, ...stateFilePaths].map(p => updateIndex(index, p)));
 
   return index;
+}
+
+export async function updateIndex(index: SyncIndex, file: string): Promise<boolean> {
+  const stat = await fs.promises.stat(file);
+  const existing = index[file];
+
+  if (
+    existing &&
+    stat.mtimeMs === existing.lastModified &&
+    stat.size === existing.size
+  ) {
+    return false;
+  }
+
+  const content = await fs.promises.readFile(file);
+  index[file] = {
+    hash: crypto.createHash("sha256").update(content).digest("hex"),
+    lastModified: stat.mtimeMs,
+    lastSynced: existing?.lastSynced ?? null,
+    size: stat.size,
+  };
+
+  return true;
 }
 
 export function diffIndex(oldIndex: SyncIndex, newIndex: SyncIndex): IndexDiff {
