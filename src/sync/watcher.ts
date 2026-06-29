@@ -1,5 +1,6 @@
 import chokidar from "chokidar";
 import { loadConfig } from "../config";
+import { generateIndex, saveIndex } from "../state";
 
 const WATCH_PATTERNS = [
     "**/*.srm",
@@ -24,3 +25,10 @@ const watcher = chokidar.watch(
         }
     },
 );
+
+
+// Unsure of this
+watcher.on("add", async () => {
+    const index = await generateIndex(config.retroarchSaveDir, config.retroarchStateDir);
+    saveIndex(index);
+})
