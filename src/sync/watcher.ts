@@ -1,5 +1,5 @@
 import chokidar from "chokidar";
-import { loadConfig } from "../src/config";
+import { loadConfig } from "../config";
 
 const WATCH_PATTERNS = [
     "**/*.srm",
