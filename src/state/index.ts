@@ -20,7 +20,7 @@ export interface IndexDiff {
 const SAVE_PATTERNS = ["**/*.srm", "**/*.sav", "**/*.srm.bak"];
 const STATE_PATTERNS = ["**/*.state", "**/*.state[0-9]", "**/*.state[0-9][0-9]"];
 
-type SyncIndex = Record<string, FileRecord>
+export type SyncIndex = Record<string, FileRecord>
 
 export function loadIndex(): SyncIndex {
   try {
