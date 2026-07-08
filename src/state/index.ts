@@ -4,16 +4,17 @@ import fg from "fast-glob";
 import fs from "fs";
 
 
-interface FileRecord {
+export interface FileRecord {
   hash: string;
   lastModified: number;
   lastSynced: number | null;
-  size: number
+  size: number;
+  remotePath: string;
 }
 
 export interface IndexDiff {
-  added: string[];
-  modified: string[];
+  added: [string, FileRecord][];
+  modified: [string, FileRecord][];
   deleted: string[];
 }
 
@@ -69,25 +70,26 @@ export async function updateIndex(index: SyncIndex, file: string): Promise<boole
     lastModified: stat.mtimeMs,
     lastSynced: existing?.lastSynced ?? null,
     size: stat.size,
+    remotePath: file.slice(file.indexOf("retroarch") + "retroarch".length),
   };
 
   return true;
 }
 
 export function diffIndex(oldIndex: SyncIndex, newIndex: SyncIndex): IndexDiff {
-  const added: string[] = [];
-  const modified: string[] = [];
+  const added: [string, FileRecord][] = [];
+  const modified: [string, FileRecord][] = [];
   const deleted: string[] = [];
 
   for (const [path, record] of Object.entries(newIndex)) {
     if (!oldIndex[path]) {
-      added.push(path);
+      added.push([path, record]);
     } else if (oldIndex[path].hash !== record.hash) {
-      modified.push(path);
+      modified.push([path, record]);
     }
   }
 
-  for (const path of Object.keys(newIndex)) {
+  for (const path of Object.keys(oldIndex)) {
     if (!newIndex[path]) {
       deleted.push(path);
     }
