@@ -56,28 +56,32 @@ export async function generateIndex(savesDir: string, statesDir: string): Promis
   return index;
 }
 
-export async function updateIndex(index: SyncIndex, file: string): Promise<boolean> {
-  const stat = await fs.promises.stat(file);
-  const existing = index[file];
+export async function updateIndex(index: SyncIndex, file: string): Promise<SyncIndex> {
+  try {
+    const stat = await fs.promises.stat(file);
+    const existing = index[file];
 
-  if (
-    existing &&
-    stat.mtimeMs === existing.lastModified &&
-    stat.size === existing.size
-  ) {
-    return false;
+    if (
+      existing &&
+      stat.mtimeMs === existing.lastModified &&
+      stat.size === existing.size
+    ) {
+      return index;
+    }
+
+    const content = await fs.promises.readFile(file);
+    const fileData = {
+      hash: crypto.createHash("sha256").update(content).digest("hex"),
+      lastModified: stat.mtimeMs,
+      lastSynced: existing?.lastSynced ?? null,
+      size: stat.size,
+      remotePath: file.slice(file.indexOf("retroarch") + "retroarch".length),
+    };
+
+    return { ...index, [file]: fileData };
+  } catch (error) {
+    throw new Error("Failed to update file.", { cause: error });
   }
-
-  const content = await fs.promises.readFile(file);
-  index[file] = {
-    hash: crypto.createHash("sha256").update(content).digest("hex"),
-    lastModified: stat.mtimeMs,
-    lastSynced: existing?.lastSynced ?? null,
-    size: stat.size,
-    remotePath: file.slice(file.indexOf("retroarch") + "retroarch".length),
-  };
-
-  return true;
 }
 
 export function diffIndex(oldIndex: SyncIndex, newIndex: SyncIndex): IndexDiff {

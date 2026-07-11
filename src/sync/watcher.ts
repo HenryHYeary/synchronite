@@ -1,6 +1,8 @@
 import chokidar from "chokidar";
 import { Config } from "../config";
 import { loadIndex, updateIndex } from "../state";
+import syncFile from "./engine";
+import { CloudAdapter } from "../cloud/adapter";
 
 const WATCH_PATTERNS = [
     "**/*.srm",
@@ -10,7 +12,7 @@ const WATCH_PATTERNS = [
     "**/*.state[0-9]",
 ];
 
-export async function runWatcher(config: Config) {
+export async function runWatcher(config: Config, adapter: CloudAdapter) {
   const watcher = chokidar.watch(
     WATCH_PATTERNS.flatMap(pattern => [
       `${config.retroarchSaveDir}/${pattern}`,
@@ -29,12 +31,15 @@ export async function runWatcher(config: Config) {
     const index = loadIndex();
     const updated = await updateIndex(index, filePath);
 
-    if (!updated) {
-      throw new Error("Failed to update index.");
-    }
+    const results = await syncFile(adapter, index, updated);
 
-    // TODO: implement syncFile in sync engine module
-    // Messy code below, need to find a better way to do this
-    // await syncFile(filePath, path.relative(path.normalize(`${config.retroarchSaveDir}/..`), filePath));
+  //   const successes = results.filter(res => res.success);
+  //   const failures = results.filter(res => !res.success);
+
+  //   if (results.length === successes.length) {
+  //     console.log(`Success. ${results.length} file(s) uploaded successfully.\n${results.map(res => `${res.path}\n`)}`);
+  //   } else {
+  //     console.log(`Failure. ${successes.length} file(s) uploaded successfully. ${failures.length} file(s) failed to upload.\nSUCCESSES:\n${successes.map(su => `${su.path}\n`)}\nFAILURES:\n${failures.map(fail => `${fail.path}\n`)}`);
+  //   }
   });
 }
