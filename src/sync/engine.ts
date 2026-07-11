@@ -1,20 +1,41 @@
 
 import { diffIndex, SyncIndex } from "../state";
 import { CloudAdapter } from "../cloud/adapter";
+import { PathRecord } from "../state";
 
-export default async function syncFile(adapter: CloudAdapter, oldIndex: SyncIndex, newIndex: SyncIndex): Promise<boolean> {
+interface SyncResult {
+  path: string;
+  success: boolean;
+  error?: unknown;
+}
+
+async function uploadEntry(adapter: CloudAdapter, entry: PathRecord): Promise<SyncResult> {
+  try {
+    await adapter.upload(entry.path, entry.record.remotePath);
+    return { path: entry.path, success: true };
+  } catch(error) {
+    return { path: entry.path, success: false, error };
+  }
+}
+
+async function deleteEntry(adapter: CloudAdapter, filePath: string): Promise<SyncResult> {
+  try {
+    await adapter.deleteRemote(filePath);
+    return { path: filePath, success: true };
+  } catch (error) {
+    return { path: filePath, success: false, error };
+  }
+}
+ 
+export default async function syncFile(adapter: CloudAdapter, oldIndex: SyncIndex, newIndex: SyncIndex): Promise<SyncResult[]> {
+    
   const { added, modified, deleted } = diffIndex(oldIndex, newIndex);
 
-  try {
-    Promise.all([ 
-      added.map(addedEntry => adapter.upload(addedEntry[0], addedEntry[1].remotePath)),
-      modified.map(modEntry => adapter.upload(modEntry[0], modEntry[1].remotePath)),
-      deleted.map(deletedPath => adapter.deleteRemote(deletedPath))
-    ].flat());
+  const results = await Promise.all([ 
+    added.map(addedEntry => uploadEntry(adapter, addedEntry)),
+    modified.map(modEntry => uploadEntry(adapter, modEntry)),
+    deleted.map(deletedPath => deleteEntry(adapter, deletedPath))
+  ].flat());
 
-    return true;
-  } catch (error) {
-    console.error(error);
-    return false;
-  }
+  return results;
 }

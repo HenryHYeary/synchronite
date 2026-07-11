@@ -12,9 +12,13 @@ export interface FileRecord {
   remotePath: string;
 }
 
+export interface PathRecord {
+  path: string;
+  record: FileRecord;
+}
 export interface IndexDiff {
-  added: [string, FileRecord][];
-  modified: [string, FileRecord][];
+  added: PathRecord[];
+  modified: PathRecord[];
   deleted: string[];
 }
 
@@ -77,15 +81,15 @@ export async function updateIndex(index: SyncIndex, file: string): Promise<boole
 }
 
 export function diffIndex(oldIndex: SyncIndex, newIndex: SyncIndex): IndexDiff {
-  const added: [string, FileRecord][] = [];
-  const modified: [string, FileRecord][] = [];
+  const added: PathRecord[] = [];
+  const modified: PathRecord[] = [];
   const deleted: string[] = [];
 
   for (const [path, record] of Object.entries(newIndex)) {
     if (!oldIndex[path]) {
-      added.push([path, record]);
+      added.push({ path, record });
     } else if (oldIndex[path].hash !== record.hash) {
-      modified.push([path, record]);
+      modified.push({ path, record });
     }
   }
 

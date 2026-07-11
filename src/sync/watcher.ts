@@ -1,7 +1,6 @@
 import chokidar from "chokidar";
 import { Config } from "../config";
 import { loadIndex, updateIndex } from "../state";
-import path from "path";
 
 const WATCH_PATTERNS = [
     "**/*.srm",
