@@ -28,14 +28,19 @@ export async function runWatcher(config: Config, adapter: CloudAdapter) {
   );
 
   watcher.on("change", async (filePath) => {
-    const index = loadIndex();
-    const updated = await updateIndex(index, filePath);
+    try {
+      const index = loadIndex();
+      const updated = await updateIndex(index, filePath);
 
-    const results = await syncFile(adapter, index, updated);
+      const results = await syncFile(adapter, index, updated);
 
-  //   const successes = results.filter(res => res.success);
-  //   const failures = results.filter(res => !res.success);
+      const successes = results.filter(res => res.success);
+      const failures = results.filter(res => !res.success);
+    } catch (error) {
+      throw new Error("Sync after change failed.", { cause: error });
+    }
 
+  // Buggy code below
   //   if (results.length === successes.length) {
   //     console.log(`Success. ${results.length} file(s) uploaded successfully.\n${results.map(res => `${res.path}\n`)}`);
   //   } else {

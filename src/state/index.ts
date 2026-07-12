@@ -30,8 +30,12 @@ export type SyncIndex = Record<string, FileRecord>
 export function loadIndex(): SyncIndex {
   try {
     return JSON.parse(fs.readFileSync(APP_PATHS.index, "utf-8"));
-  } catch {
-    return {};
+  } catch (error) {
+    if (error instanceof Error && (error as NodeJS.ErrnoException).code === "ENOENT") {
+      return {};
+    } else {
+      throw new Error("Failed to load index.", { cause: error });
+    }
   }
 }
 
