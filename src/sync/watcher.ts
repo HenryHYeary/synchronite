@@ -36,15 +36,14 @@ export async function runWatcher(config: Config, adapter: CloudAdapter) {
 
       const successes = results.filter(res => res.success);
       const failures = results.filter(res => !res.success);
-    } catch (error) {
-      throw new Error("Sync after change failed.", { cause: error });
-    }
 
-  // Buggy code below
-  //   if (results.length === successes.length) {
-  //     console.log(`Success. ${results.length} file(s) uploaded successfully.\n${results.map(res => `${res.path}\n`)}`);
-  //   } else {
-  //     console.log(`Failure. ${successes.length} file(s) uploaded successfully. ${failures.length} file(s) failed to upload.\nSUCCESSES:\n${successes.map(su => `${su.path}\n`)}\nFAILURES:\n${failures.map(fail => `${fail.path}\n`)}`);
-  //   }
+      if (results.length === successes.length) {
+        console.log(`Success. ${results.length} file(s) uploaded successfully.\n${results.map(res => res.path).join("\n")}`);
+      } else {
+        console.log(`Failure. ${successes.length} file(s) uploaded successfully. ${failures.length} file(s) failed to upload.\nSUCCESSES:\n${successes.map(su => su.path).join("\n")}\nFAILURES:\n${failures.map(fail => `${fail.path}: ${fail.error}`).join("\n")}`);
+      }
+    } catch (error) {
+      console.error(`Failed to sync ${filePath}:`, error);
+    }
   });
 }
