@@ -27,11 +27,13 @@ export async function runWatcher(config: Config, adapter: CloudAdapter) {
     },
   );
 
-  // Should consolidate these into one shared helper.
-  watcher.on("change", async (filePath) => {
+  async function processOnEvent(filePath: string, eventType: "add" | "change" | "unlink"): Promise<void> {
+    const actionWord = { add: "sync", change: "sync", unlink: "unlink" }[eventType];
+    const resultWord = { add: "uploaded", change: "uploaded", unlink: "deleted" }[eventType];
+    const resultWordPres = { add: "upload", change: "upload", unlink: "delete" }[eventType];
     try {
       const index = loadIndex();
-      const updated = await updateIndex(index, filePath);
+      const updated = eventType === "unlink" ? removeFromIndex(index, filePath) : await updateIndex(index, filePath);
 
       const results = await syncFile(adapter, index, updated);
 
@@ -39,32 +41,16 @@ export async function runWatcher(config: Config, adapter: CloudAdapter) {
       const failures = results.filter(res => !res.success);
 
       if (results.length === successes.length) {
-        console.log(`Success. ${results.length} file(s) uploaded successfully.\n${results.map(res => res.path).join("\n")}`);
+        console.log(`Success. ${results.length} file(s) ${resultWord} successfully.\n${results.map(res => res.path).join("\n")}`)
       } else {
-        console.log(`Failure. ${successes.length} file(s) uploaded successfully. ${failures.length} file(s) failed to upload.\nSUCCESSES:\n${successes.map(su => su.path).join("\n")}\nFAILURES:\n${failures.map(fail => `${fail.path}: ${fail.error}`).join("\n")}`);
+        console.log(`Failure. ${successes.length} file(s) ${resultWord} successfully. ${failures.length} file(s) failed to ${resultWordPres}.\nSUCCESSES:\n${successes.map(su => su.path).join("\n")}\nFAILURES:\n${failures.map(fail => `${fail.path}: ${fail.error}`).join("\n")}`);
       }
     } catch (error) {
-      console.error(`Failed to sync ${filePath}:`, error);
+      console.error(`Failed to ${actionWord} ${filePath}`, error);
     }
-  });
+  }
 
-  watcher.on("unlink", async (filePath) => {
-    try {
-      const index = loadIndex();
-      const updated = removeFromIndex(index, filePath);
+  watcher.on("change", (filePath) => processOnEvent(filePath, "change"));
 
-      const results = await syncFile(adapter, index, updated);
-
-      const successes = results.filter(res => res.success);
-      const failures = results.filter(res => !res.success);
-
-      if (results.length === successes.length) {
-        console.log(`Success. ${results.length} file(s) deleted successfully.\n${results.map(res => res.path).join("\n")}`);
-      } else {
-        console.log(`Failure. ${successes.length} file(s) deleted successfully. ${failures.length} file(s) failed to delete.\nSUCCESSES:\n${successes.map(su => su.path).join("\n")}\nFAILURES:\n${failures.map(fail => `${fail.path}: ${fail.error}`).join("\n")}`);
-      }
-    } catch (error) {
-      console.error(`Failed to unlink ${filePath}`, error);
-    }
-  });
+  watcher.on("unlink", (filePath) => processOnEvent(filePath, "unlink"));
 }
