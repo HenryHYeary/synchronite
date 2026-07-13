@@ -1,6 +1,6 @@
 import chokidar from "chokidar";
 import { Config } from "../config";
-import { loadIndex, updateIndex } from "../state";
+import { loadIndex, removeFromIndex, updateIndex } from "../state";
 import syncFile from "./engine";
 import { CloudAdapter } from "../cloud/adapter";
 
@@ -46,4 +46,15 @@ export async function runWatcher(config: Config, adapter: CloudAdapter) {
       console.error(`Failed to sync ${filePath}:`, error);
     }
   });
+
+  // watcher.on("unlink", async (filePath) => {
+  //   try {
+  //     const index = loadIndex();
+  //     const updated = removeFromIndex(index, filePath);
+
+  //     const results = await syncFile(adapter, index, updated);
+  //   } catch (error) {
+  //     console.error(`Failed to unlink ${filePath}`, error);
+  //   }
+  // })
 }

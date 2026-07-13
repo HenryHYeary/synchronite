@@ -79,13 +79,19 @@ export async function updateIndex(index: SyncIndex, file: string): Promise<SyncI
       lastModified: stat.mtimeMs,
       lastSynced: existing?.lastSynced ?? null,
       size: stat.size,
-      remotePath: file.slice(file.indexOf("retroarch") + "retroarch".length),
+      remotePath: file.slice(file.toLowerCase().indexOf("retroarch") + "retroarch".length),
     };
 
     return { ...index, [file]: fileData };
   } catch (error) {
     throw new Error("Failed to update file.", { cause: error });
   }
+}
+
+export function removeFromIndex(index: SyncIndex, file: string): SyncIndex {
+  const newIndex = Object.assign({}, index);
+  delete newIndex[file];
+  return newIndex;
 }
 
 export function diffIndex(oldIndex: SyncIndex, newIndex: SyncIndex): IndexDiff {
