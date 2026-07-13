@@ -27,6 +27,7 @@ export async function runWatcher(config: Config, adapter: CloudAdapter) {
     },
   );
 
+  // Should consolidate these into one shared helper.
   watcher.on("change", async (filePath) => {
     try {
       const index = loadIndex();
@@ -47,14 +48,23 @@ export async function runWatcher(config: Config, adapter: CloudAdapter) {
     }
   });
 
-  // watcher.on("unlink", async (filePath) => {
-  //   try {
-  //     const index = loadIndex();
-  //     const updated = removeFromIndex(index, filePath);
+  watcher.on("unlink", async (filePath) => {
+    try {
+      const index = loadIndex();
+      const updated = removeFromIndex(index, filePath);
 
-  //     const results = await syncFile(adapter, index, updated);
-  //   } catch (error) {
-  //     console.error(`Failed to unlink ${filePath}`, error);
-  //   }
-  // })
+      const results = await syncFile(adapter, index, updated);
+
+      const successes = results.filter(res => res.success);
+      const failures = results.filter(res => !res.success);
+
+      if (results.length === successes.length) {
+        console.log(`Success. ${results.length} file(s) deleted successfully.\n${results.map(res => res.path).join("\n")}`);
+      } else {
+        console.log(`Failure. ${successes.length} file(s) deleted successfully. ${failures.length} file(s) failed to delete.\nSUCCESSES:\n${successes.map(su => su.path).join("\n")}\nFAILURES:\n${failures.map(fail => `${fail.path}: ${fail.error}`).join("\n")}`);
+      }
+    } catch (error) {
+      console.error(`Failed to unlink ${filePath}`, error);
+    }
+  });
 }
