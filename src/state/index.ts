@@ -55,9 +55,11 @@ export async function generateIndex(savesDir: string, statesDir: string): Promis
     findFiles(statesDir, STATE_PATTERNS),
   ]);
 
-  const index = loadIndex();
+  let index = loadIndex();
 
-  await Promise.all([...saveFilePaths, ...stateFilePaths].map(p => updateIndex(index, p)));
+  for (const p of [...saveFilePaths, ...stateFilePaths]) {
+    index = await updateIndex(index, p);
+  }
 
   return index;
 }

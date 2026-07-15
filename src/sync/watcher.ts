@@ -1,6 +1,6 @@
 import chokidar from "chokidar";
-import { Config } from "../config";
-import { loadIndex, removeFromIndex, updateIndex } from "../state";
+import { Config, loadConfig } from "../config";
+import { generateIndex, loadIndex, removeFromIndex, updateIndex } from "../state";
 import syncFile from "./engine";
 import { CloudAdapter } from "../cloud/adapter";
 
@@ -12,18 +12,25 @@ const WATCH_PATTERNS = [
     "**/*.state[0-9]",
 ];
 
-export async function runWatcher(config: Config, adapter: CloudAdapter) {
+export async function runWatcher(adapter: CloudAdapter) {
+  const config = loadConfig();
+  const existing = loadIndex();
+  const newIndex = await generateIndex(config.retroarchSaveDir, config.retroarchStateDir);
+
+  const results = await syncFile(adapter, existing, newIndex);
+
   const watcher = chokidar.watch(
     WATCH_PATTERNS.flatMap(pattern => [
       `${config.retroarchSaveDir}/${pattern}`,
       `${config.retroarchStateDir}/${pattern}`,
     ]),
     { 
-        persistent: true,
-        awaitWriteFinish: {
+      persistent: true,
+      ignoreInitial: true,
+      awaitWriteFinish: {
         stabilityThreshold: 500,
         pollInterval: 100,
-      }
+      },
     },
   );
 
@@ -49,6 +56,8 @@ export async function runWatcher(config: Config, adapter: CloudAdapter) {
       console.error(`Failed to ${actionWord} ${filePath}`, error);
     }
   }
+
+  watcher.on("add", (filePath) => processOnEvent(filePath, "add"));
 
   watcher.on("change", (filePath) => processOnEvent(filePath, "change"));
 
