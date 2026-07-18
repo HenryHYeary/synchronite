@@ -3,7 +3,7 @@ import { diffIndex, SyncIndex } from "../state";
 import { CloudAdapter } from "../cloud/adapter";
 import { PathRecord } from "../state";
 
-interface SyncResult {
+export interface SyncResult {
   path: string;
   success: boolean;
   error?: unknown;
