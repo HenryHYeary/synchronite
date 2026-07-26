@@ -19,8 +19,7 @@ export function loadConfig(filePath: string = APP_PATHS.config): Config {
   const result = ConfigSchema.safeParse(raw);
 
   if (!result.success) {
-    console.error("Invalid config:\n", z.treeifyError(result.error));
-    process.exit(1);
+    throw new Error("Invalid config.", { cause: z.treeifyError(result.error) });
   }
 
   return result.data;

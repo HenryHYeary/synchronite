@@ -6,6 +6,7 @@ const paths = envPaths("synchronite");
 
 export const APP_PATHS = {
   config: path.join(paths.config, "config.json"),
+  credentials: path.join(paths.config, "credentials.json"),
   index: path.join(paths.data, "sync-index.json"),
   log: path.join(paths.log, "synchronite.log"),
 };
