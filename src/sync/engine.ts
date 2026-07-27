@@ -1,7 +1,7 @@
 
-import { diffIndex, SyncIndex } from "../state";
-import { CloudAdapter } from "../cloud/adapter";
-import { PathRecord } from "../state";
+import { diffIndex, SyncIndex } from "../state/index.js";
+import { CloudAdapter } from "../cloud/adapter.js";
+import { PathRecord } from "../state/index.js";
 
 export interface SyncResult {
   path: string;

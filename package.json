@@ -32,5 +32,6 @@
     "env-paths": "^4.0.0",
     "fast-glob": "^3.3.3",
     "zod": "^4.4.3"
-  }
+  },
+  "type": "module"
 }

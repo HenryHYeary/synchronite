@@ -1,8 +1,8 @@
-import { APP_PATHS } from "../paths";
+import { APP_PATHS } from "../paths.js";
 import crypto from "crypto";
 import fg from "fast-glob";
 import fs from "fs";
-import { loadConfig } from "../config";
+import { loadConfig } from "../config.js";
 import path from "path";
 
 
@@ -70,14 +70,14 @@ export async function updateIndex(index: SyncIndex, file: string): Promise<SyncI
   const relativeToState = path.relative(config.retroarchStateDir, file);
   const inSaveDir = !relativeToSave.startsWith("..");
   const inStateDir = !relativeToState.startsWith("..");
-  
-  let baseDir = "";
 
-  if (inSaveDir !== inStateDir) {
-    baseDir = inSaveDir ? config.retroarchSaveDir : config.retroarchStateDir;
-  } else {
+  if (inSaveDir === inStateDir) {
     throw new Error(`File ${file} is not inside a configured save or state directory`);
   }
+
+  const folderLabel = inSaveDir ? "saves" : "states";
+  const relativePath = inSaveDir ? relativeToSave : relativeToState;
+  const remotePath = `/${folderLabel}/${relativePath}`;
 
   try {
     const stat = await fs.promises.stat(file);
@@ -97,7 +97,7 @@ export async function updateIndex(index: SyncIndex, file: string): Promise<SyncI
       lastModified: stat.mtimeMs,
       lastSynced: existing?.lastSynced ?? null,
       size: stat.size,
-      remotePath: inSaveDir ? relativeToSave : relativeToState,
+      remotePath,
     };
 
     return { ...index, [file]: fileData };

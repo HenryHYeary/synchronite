@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-import { ensureAppDirs, APP_PATHS } from "./paths";
-import { Config, loadConfig } from "./config";
-import { runInit } from "./commands/init";
+import { ensureAppDirs, APP_PATHS } from "./paths.js";
+import { Config, loadConfig } from "./config.js";
+import { runInit } from "./commands/init.js";
 import fs from "fs";
-import { CloudAdapter } from "./cloud/adapter";
-import { DropboxAdapter } from "./cloud/dropbox";
-import { Credentials, loadCredentials } from "./credentials";
-import { runWatcher } from "./sync/watcher";
+import { CloudAdapter } from "./cloud/adapter.js";
+import { DropboxAdapter } from "./cloud/dropbox.js";
+import { Credentials, loadCredentials } from "./credentials.js";
+import { runWatcher } from "./sync/watcher.js";
 
 const command = process.argv[2];
 

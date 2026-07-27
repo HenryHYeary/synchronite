@@ -1,4 +1,4 @@
-import { CloudAdapter, RemoteFileRecord } from "./adapter"
+import { CloudAdapter, RemoteFileRecord } from "./adapter.js"
 import { promises as fs } from "fs" 
 
 export class DropboxAdapter implements CloudAdapter {

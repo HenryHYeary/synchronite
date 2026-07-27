@@ -1,9 +1,9 @@
 import chokidar from "chokidar";
-import { loadConfig } from "../config";
-import { generateIndex, loadIndex, removeFromIndex, updateIndex } from "../state";
-import syncFile from "./engine";
-import { CloudAdapter } from "../cloud/adapter";
-import { SyncResult } from "./engine";
+import { loadConfig } from "../config.js";
+import { generateIndex, loadIndex, removeFromIndex, updateIndex } from "../state/index.js";
+import syncFile from "./engine.js";
+import { CloudAdapter } from "../cloud/adapter.js";
+import { SyncResult } from "./engine.js";
 
 const WATCH_PATTERNS = [
     "**/*.srm",

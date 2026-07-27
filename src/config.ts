@@ -1,6 +1,6 @@
 import { z } from "zod";
 import fs from "fs";
-import { APP_PATHS } from "./paths";
+import { APP_PATHS } from "./paths.js";
 
 export const ConfigSchema = z.object({
   retroarchSaveDir: z.string(),

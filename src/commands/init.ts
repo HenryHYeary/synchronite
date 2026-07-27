@@ -1,7 +1,7 @@
 import * as p from "@clack/prompts";
 import fs from "fs";
-import { getDefaultRetroarchPaths, Paths } from "../retroarch";
-import { APP_PATHS } from "../paths";
+import { getDefaultRetroarchPaths, Paths } from "../retroarch.js";
+import { APP_PATHS } from "../paths.js";
 
 export async function runInit(): Promise<void> {
   p.intro("Synchronite setup");
