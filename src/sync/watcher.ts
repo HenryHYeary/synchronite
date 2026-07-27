@@ -1,6 +1,6 @@
 import chokidar from "chokidar";
 import { loadConfig } from "../config.js";
-import { generateIndex, loadIndex, removeFromIndex, updateIndex } from "../state/index.js";
+import { generateIndex, loadIndex, removeFromIndex, saveIndex, updateIndex } from "../state/index.js";
 import syncFile from "./engine.js";
 import { CloudAdapter } from "../cloud/adapter.js";
 import { SyncResult } from "./engine.js";
@@ -40,7 +40,8 @@ export async function runWatcher(adapter: CloudAdapter) {
   try {
     const newIndex = await generateIndex(config.retroarchSaveDir, config.retroarchStateDir);
 
-    const results = await syncFile(adapter, existing, newIndex);
+    const { results, confirmedIndex } = await syncFile(adapter, existing, newIndex);
+    saveIndex(confirmedIndex);
 
     logResults("initialSync", results);
   } catch (error) {
@@ -69,7 +70,8 @@ export async function runWatcher(adapter: CloudAdapter) {
       const index = loadIndex();
       const updated = eventType === "unlink" ? removeFromIndex(index, filePath) : await updateIndex(index, filePath);
 
-      const results = await syncFile(adapter, index, updated);
+      const { results, confirmedIndex } = await syncFile(adapter, index, updated);
+      saveIndex(confirmedIndex);
 
       logResults(eventType, results);
     } catch (error) {
