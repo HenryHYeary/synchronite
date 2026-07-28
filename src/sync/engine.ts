@@ -2,12 +2,14 @@
 import { diffIndex, SyncIndex } from "../state/index.js";
 import { CloudAdapter } from "../cloud/adapter.js";
 import { PathRecord } from "../state/index.js";
+import { Config } from "../config.js";
 
 export interface SyncResult {
   isUpload: boolean;
   path: string;
   success: boolean;
   error?: unknown;
+  skipped?: boolean;
 }
 
 async function uploadEntry(adapter: CloudAdapter, entry: PathRecord): Promise<SyncResult> {
@@ -19,7 +21,11 @@ async function uploadEntry(adapter: CloudAdapter, entry: PathRecord): Promise<Sy
   }
 }
 
-async function deleteEntry(adapter: CloudAdapter, filePath: string): Promise<SyncResult> {
+async function deleteEntry(adapter: CloudAdapter, filePath: string, config: Config): Promise<SyncResult> {
+  if (!config.propagateDeletes) {
+    return { isUpload: false, path: filePath, success: true, skipped: true };
+  }
+
   try {
     await adapter.deleteRemote(filePath);
     return { isUpload: false, path: filePath, success: true };
@@ -28,14 +34,14 @@ async function deleteEntry(adapter: CloudAdapter, filePath: string): Promise<Syn
   }
 }
  
-export default async function syncFile(adapter: CloudAdapter, oldIndex: SyncIndex, newIndex: SyncIndex): Promise<{ results: SyncResult[], confirmedIndex: SyncIndex }> {
+export default async function syncFile(adapter: CloudAdapter, oldIndex: SyncIndex, newIndex: SyncIndex, config: Config): Promise<{ results: SyncResult[], confirmedIndex: SyncIndex }> {
     
   const { added, modified, deleted } = diffIndex(oldIndex, newIndex);
 
   const results = await Promise.all([ 
     added.map(addedEntry => uploadEntry(adapter, addedEntry)),
     modified.map(modEntry => uploadEntry(adapter, modEntry)),
-    deleted.map(deletedPath => deleteEntry(adapter, deletedPath))
+    deleted.map(deletedPath => deleteEntry(adapter, deletedPath, config))
   ].flat());
 
   const successes = results.filter(r => r.success);
@@ -44,6 +50,7 @@ export default async function syncFile(adapter: CloudAdapter, oldIndex: SyncInde
     const path = success.path;
     if (success.isUpload) {
       confirmedIndex[path] = newIndex[path];
+      confirmedIndex[path].lastSynced = Date.now();
     } else {
       delete confirmedIndex[path]
     }

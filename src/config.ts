@@ -9,6 +9,7 @@ export const ConfigSchema = z.object({
   cloudConfig: z.record(z.string(), z.string()),
   syncIntervalMs: z.number().positive().default(5000),
   modificationStrategy: z.enum(["latest-wins", "prompt"]).default("latest-wins"),
+  propagateDeletes: z.boolean().default(false),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;
