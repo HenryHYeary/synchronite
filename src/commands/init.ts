@@ -1,5 +1,6 @@
 import * as p from "@clack/prompts";
 import fs from "fs";
+import { authenticate } from "../auth/oauth.js";
 import { getDefaultRetroarchPaths, Paths } from "../retroarch.js";
 import { APP_PATHS } from "../paths.js";
 
@@ -40,6 +41,23 @@ export async function runInit(): Promise<void> {
   if (p.isCancel(saves) || p.isCancel(states) || p.isCancel(provider)) {
     p.cancel("Setup cancelled");
     process.exit(0);
+  }
+
+  if (provider !== "dropbox") {
+    p.cancel("Only Dropbox is currently supported right now. Google Drive and S3 support are coming soon.");
+    process.exit(0);
+  }
+
+  const spinner = p.spinner();
+  spinner.start("Waiting for dropbox authorization in your browser...");
+
+  try {
+    await authenticate();
+    spinner.stop("Dropbox connected.");
+  } catch (error) {
+    spinner.stop("Dropbox authentication failed.");
+    console.error(error);
+    process.exit(1);
   }
 
   const config = {

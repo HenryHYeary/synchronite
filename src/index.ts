@@ -6,7 +6,7 @@ import { runInit } from "./commands/init.js";
 import fs from "fs";
 import { CloudAdapter } from "./cloud/adapter.js";
 import { DropboxAdapter } from "./cloud/dropbox.js";
-import { Credentials, loadCredentials } from "./credentials.js";
+import { Credentials, loadCredentials } from "./auth/credentials.js";
 import { runWatcher } from "./sync/watcher.js";
 
 const command = process.argv[2];
@@ -26,7 +26,7 @@ async function main() {
     }
 
     let config: Config;
-    let credentials: Credentials;
+    let credentials: Credentials | null;
 
     try {
       config = loadConfig();
@@ -39,6 +39,11 @@ async function main() {
       credentials = loadCredentials();
     } catch (error) {
       console.error("Failed to load credentials: ", error);
+      process.exit(1);
+    }
+
+    if (!credentials) {
+      console.error("No credentials found. Run `synchronite init` first.");
       process.exit(1);
     }
     

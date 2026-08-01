@@ -1,7 +1,8 @@
 import { generateCodeChallenge, generateCodeVerififer } from "./pkce.js";
-import { CALLBACK_PORT } from "./server.js";
+import { CALLBACK_PORT, waitForCode } from "./server.js";
+import { saveCredentials } from "./credentials.js";
 
-const APP_KEY = "";
+const APP_KEY = "v4sl0nuhvrn55ux";
 const REDIRECT_URI = `http://localhost:${CALLBACK_PORT}/callback`;
 
 interface TokenResponse {
@@ -12,7 +13,7 @@ interface TokenResponse {
 
 function buildAuthorizeUrl(codeChallenge: string): string {
   const params = new URLSearchParams({
-    clientId: APP_KEY,
+    client_id: APP_KEY,
     redirect_uri: REDIRECT_URI,
     response_type: "code",
     code_challenge: codeChallenge,
@@ -44,7 +45,17 @@ async function exchangeCodeForTokens(code: string, verifier: string): Promise<To
   return response.json();
 }
 
-const verifier = generateCodeVerififer();
-const challenge = generateCodeChallenge(verifier);
 
-const authUrl = buildAuthorizeUrl(challenge);
+export async function authenticate(): Promise<void> {
+  const verifier = generateCodeVerififer();
+  const challenge = generateCodeChallenge(verifier);
+
+  const authUrl = buildAuthorizeUrl(challenge);
+  console.log(`Open this URL in your browser to authorize Synchronite:\n${authUrl}`);
+
+  const codePromise = waitForCode();
+
+  const code = await codePromise;
+  const tokens = await exchangeCodeForTokens(code, verifier);
+  saveCredentials(tokens);
+}
