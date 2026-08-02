@@ -1,6 +1,6 @@
 import { generateCodeChallenge, generateCodeVerififer } from "./pkce.js";
 import { CALLBACK_PORT, waitForCode } from "./server.js";
-import { saveCredentials } from "./credentials.js";
+import { loadCredentials, saveCredentials, updateAccessToken } from "./credentials.js";
 
 const APP_KEY = "v4sl0nuhvrn55ux";
 const REDIRECT_URI = `http://localhost:${CALLBACK_PORT}/callback`;
@@ -8,6 +8,11 @@ const REDIRECT_URI = `http://localhost:${CALLBACK_PORT}/callback`;
 interface TokenResponse {
   access_token: string,
   refresh_token: string,
+  expires_in: number,
+}
+
+interface RefreshResponse {
+  access_token: string,
   expires_in: number,
 }
 
@@ -58,4 +63,38 @@ export async function authenticate(): Promise<void> {
   const code = await codePromise;
   const tokens = await exchangeCodeForTokens(code, verifier);
   saveCredentials(tokens);
+}
+
+export async function refreshAccessToken(refreshToken: string): Promise<RefreshResponse> {
+  const response = await fetch("https://api.dropbox.com/oauth2/toke", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+      client_id: APP_KEY,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Token refresh failed: ${response.status} ${errorText}`);
+  }
+
+  return response.json();
+}
+
+export async function getValidAccessToken(): Promise<string> {
+  const credentials = loadCredentials();
+  if (!credentials) {
+    throw new Error("No credentials found, run `synchronite init` first.");
+  }
+
+  if (credentials.expiresAt > Date.now() + 60000) {
+    return credentials.accessToken;
+  }
+
+  const refreshed = await refreshAccessToken(credentials.refreshToken);
+  updateAccessToken(refreshed.access_token, refreshed.expires_in);
+  return refreshed.access_token;
 }

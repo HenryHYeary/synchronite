@@ -36,3 +36,16 @@ export function loadCredentials(): Credentials | null {
 
   return result.data;
 }
+
+export function updateAccessToken(accessToken: string, expiresIn: number): void {
+  const current = loadCredentials();
+  if (!current) throw new Error("Cannot update access token: no credentials found");
+
+  const updated: Credentials = {
+    ...current,
+    accessToken,
+    expiresAt: Date.now() + expiresIn * 1000,
+  }
+
+  fs.writeFileSync(APP_PATHS.credentials, JSON.stringify(updated, null, 2));
+}

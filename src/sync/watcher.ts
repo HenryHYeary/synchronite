@@ -4,6 +4,7 @@ import { generateIndex, loadIndex, removeFromIndex, saveIndex, updateIndex } fro
 import syncFile from "./engine.js";
 import { CloudAdapter } from "../cloud/adapter.js";
 import { SyncResult } from "./engine.js";
+import { withPathLock } from "./pathLock.js";
 
 const FIXED_SUFFIXES = [".srm", ".sav", ".srm.bak", ".state"];
 const STATE_SLOT_PATTERN = /\.state\d$/;
@@ -76,19 +77,21 @@ export async function runWatcher(adapter: CloudAdapter) {
   );
 
   async function processOnEvent(filePath: string, eventType: "add" | "change" | "unlink"): Promise<void> {
-    const actionWord = { add: "sync", change: "sync", unlink: "unlink" }[eventType];
+    await withPathLock(filePath, async () => {
+      const actionWord = { add: "sync", change: "sync", unlink: "unlink" }[eventType];
 
-    try {
-      const index = loadIndex();
-      const updated = eventType === "unlink" ? removeFromIndex(index, filePath) : await updateIndex(index, filePath);
+      try {
+        const index = loadIndex();
+        const updated = eventType === "unlink" ? removeFromIndex(index, filePath) : await updateIndex(index, filePath);
 
-      const { results, confirmedIndex } = await syncFile(adapter, index, updated, config);
-      saveIndex(confirmedIndex);
+        const { results, confirmedIndex } = await syncFile(adapter, index, updated, config);
+        saveIndex(confirmedIndex);
 
-      logResults(eventType, results);
-    } catch (error) {
-      console.error(`Failed to ${actionWord} ${filePath}`, error);
-    }
+        logResults(eventType, results);
+      } catch (error) {
+        console.error(`Failed to ${actionWord} ${filePath}`, error);
+      }
+    });
   }
 
   watcher.on("ready", () => console.log("Watcher ready, watching:", watcher.getWatched()));
