@@ -1,5 +1,23 @@
 import { CloudAdapter, RemoteFileRecord } from "./adapter.js"
-import { promises as fs } from "fs" 
+import { promises as fs } from "fs";
+
+interface DropboxEntry {
+  ".tag": string;
+  path_display: string;
+  size: number;
+  server_modified: string;
+  content_hash: string;
+}
+
+function formatFileEntries(entries: DropboxEntry[]): RemoteFileRecord[] {
+  return entries.filter((entry) => entry[".tag"] === "file")
+                .map((entry) => ({
+                  path: entry.path_display,
+                  size: entry.size,
+                  lastModified: new Date(entry.server_modified).getTime(),
+                  contentHash: entry.content_hash,
+                }));
+}
 
 export class DropboxAdapter implements CloudAdapter {
   private token: string;
@@ -52,15 +70,7 @@ export class DropboxAdapter implements CloudAdapter {
       throw new Error(`List failed: ${response.status} ${await response.text()}`);
     }
     const json = await response.json();
-    return json.entries
-      .filter((entry: any) => entry[".tag"] === "file")
-      .map((entry: any) => ({
-        path: entry.path_display,
-        size: entry.size,
-        lastModified: new Date(entry.server_modified).getTime(),
-        contentHash: entry.content_hash,
-      })
-    );
+    return formatFileEntries(json.entries);
     // TODO: check has_more for pagination after GUI is created for this app.
   }
 
@@ -74,6 +84,64 @@ export class DropboxAdapter implements CloudAdapter {
 
     if (!response.ok) {
       throw new Error(`Deletion failed: ${response.status} ${await response.text()}`);
+    }
+  }
+
+  async getLatestCursor(prefix: string): Promise<string> {
+    const response = await fetch("https://api.dropboxapi.com/2/files/list_folder/get_latest_cursor", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer  ${this.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ path: prefix, recursive: true }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Get cursor failed ${response.status} ${await response.text()}`);
+    }
+
+    const json = await response.json();
+    return json.cursor;
+  }
+
+  async longpoll(cursor: string, timeoutSeconds: number = 30): Promise<boolean> {
+    const response = await fetch("https://notify.dropboxapi.com/2/files/list_folder/longpoll", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${this.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ cursor, timeout: timeoutSeconds}),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Longpoll failed: ${response.status} ${await response.text()}`);
+    }
+
+    const json = await response.json();
+    return json.changes;
+  }
+
+  async listFolderContinue(cursor: string): Promise<{ entries: RemoteFileRecord[]; cursor: string; hasMore: boolean }> {
+    const response = await fetch("https://api.dropboxapi.com/2/files/list_folder/continue", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${this.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ cursor }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`List continue failed: ${response.status} ${await response.text()}`);
+    }
+
+    const json = await response.json();
+    return {
+      entries: formatFileEntries(json.entries),
+      cursor: json.cursor,
+      hasMore: json.has_more
     }
   }
 }
