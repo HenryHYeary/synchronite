@@ -21,7 +21,7 @@ function formatFileEntries(entries: DropboxEntry[]): RemoteFileRecord[] {
 }
 
 export class DropboxAdapter implements CloudAdapter {
-  async upload(localPath: string, remotePath: string): Promise<void> {
+  async upload(localPath: string, remotePath: string): Promise<{ contentHash: string }> {
     const token = getValidAccessToken();
     const file = await fs.readFile(localPath);
   
@@ -36,6 +36,9 @@ export class DropboxAdapter implements CloudAdapter {
     if (!response.ok) {
       throw new Error(`Upload failed: ${response.status} ${await response.text()}`);
     }
+
+    const json = await response.json();
+    return { contentHash: json.content_hash };
   }
 
   async download(remotePath: string, localPath: string): Promise<void> {

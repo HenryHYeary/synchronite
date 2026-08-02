@@ -6,7 +6,7 @@ export type RemoteFileRecord = {
 }
 
 export interface CloudAdapter {
-  upload(localPath: string, remotePath: string, contentHash?: string): Promise<void>;
+  upload(localPath: string, remotePath: string): Promise<{ contentHash: string }>;
   download(remotePath: string, localPath: string): Promise<void>;
   listRemote(prefix: string): Promise<RemoteFileRecord[]>;
   deleteRemote(remotePath: string): Promise<void>;

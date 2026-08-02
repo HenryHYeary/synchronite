@@ -12,6 +12,7 @@ export interface FileRecord {
   lastSynced: number | null;
   size: number;
   remotePath: string;
+  remoteContentHash: string | null;
 }
 
 export interface PathRecord {
@@ -98,6 +99,7 @@ export async function updateIndex(index: SyncIndex, file: string): Promise<SyncI
       lastSynced: existing?.lastSynced ?? null,
       size: stat.size,
       remotePath,
+      remoteContentHash: existing?.remoteContentHash ?? null,
     };
 
     return { ...index, [file]: fileData };

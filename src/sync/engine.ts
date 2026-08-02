@@ -10,12 +10,13 @@ export interface SyncResult {
   success: boolean;
   error?: unknown;
   skipped?: boolean;
+  contentHash?: string;
 }
 
 async function uploadEntry(adapter: CloudAdapter, entry: PathRecord): Promise<SyncResult> {
   try {
-    await adapter.upload(entry.path, entry.record.remotePath);
-    return { isUpload: true, path: entry.path, success: true };
+    const { contentHash } = await adapter.upload(entry.path, entry.record.remotePath);
+    return { isUpload: true, path: entry.path, success: true, contentHash };
   } catch(error) {
     return { isUpload: true, path: entry.path, success: false, error };
   }
@@ -51,6 +52,7 @@ export default async function syncFile(adapter: CloudAdapter, oldIndex: SyncInde
     if (success.isUpload) {
       confirmedIndex[path] = newIndex[path];
       confirmedIndex[path].lastSynced = Date.now();
+      confirmedIndex[path].remoteContentHash = success.contentHash ?? newIndex[path].remoteContentHash;
     } else {
       delete confirmedIndex[path]
     }
