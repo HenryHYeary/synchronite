@@ -1,5 +1,6 @@
 import { getValidAccessToken } from "../auth/oauth.js";
-import { CloudAdapter, RemoteFileRecord } from "./adapter.js"
+import { CloudAdapter, RemoteFileRecord } from "./adapter.js";
+import path from "path";
 import { promises as fs } from "fs";
 
 interface DropboxEntry {
@@ -54,6 +55,8 @@ export class DropboxAdapter implements CloudAdapter {
 
     const data = await response.arrayBuffer();
 
+
+    await fs.mkdir(path.dirname(localPath), { recursive: true });
     await fs.writeFile(localPath, Buffer.from(data));
   }
 
