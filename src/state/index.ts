@@ -2,6 +2,7 @@ import { APP_PATHS } from "../paths.js";
 import crypto from "crypto";
 import fg from "fast-glob";
 import fs from "fs";
+import { computeDiskDerivedFields } from "./fileStats.js";
 import { loadConfig } from "../config.js";
 import path from "path";
 
@@ -92,12 +93,11 @@ export async function updateIndex(index: SyncIndex, file: string): Promise<SyncI
       return index;
     }
 
-    const content = await fs.promises.readFile(file);
+    const diskDerivedFields = await computeDiskDerivedFields(file);
+
     const fileData = {
-      hash: crypto.createHash("sha256").update(content).digest("hex"),
-      lastModified: stat.mtimeMs,
+      ...diskDerivedFields,
       lastSynced: existing?.lastSynced ?? null,
-      size: stat.size,
       remotePath,
       remoteContentHash: existing?.remoteContentHash ?? null,
     };

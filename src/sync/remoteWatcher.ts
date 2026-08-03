@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { promises as fsPromises } from "fs";
 import { loadIndex, saveIndex, SyncIndex } from "../state/index.js";
 import { withPathLock } from "./pathLock.js";
+import { computeDiskDerivedFields } from "../state/fileStats.js";
 
 export async function runRemoteSyncLoop(
   adapter: DropboxAdapter,
@@ -57,14 +58,11 @@ async function processRemoteChange(
 
     await adapter.download(entry.path, localPath);
 
-    const content = await fsPromises.readFile(localPath);
-    const stat = await fsPromises.stat(localPath);
+    const diskDerivedFields = await computeDiskDerivedFields(localPath);
 
     const updatedRecord: FileRecord = {
-      hash: crypto.createHash("sha256").update(content).digest("hex"),
-      lastModified: stat.mtimeMs,
+      ...diskDerivedFields,
       lastSynced: Date.now(),
-      size: stat.size,
       remotePath: entry.path,
       remoteContentHash: entry.contentHash,
     };
