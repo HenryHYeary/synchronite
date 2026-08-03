@@ -1,46 +1,10 @@
+import { Config } from "../config.js";
 import { DropboxAdapter } from "../cloud/dropbox.js";
 import { FileRecord } from "../state/index.js";
-import crypto from "crypto";
-import { promises as fsPromises } from "fs";
 import { loadIndex, saveIndex, SyncIndex } from "../state/index.js";
 import { withPathLock } from "./pathLock.js";
 import { computeDiskDerivedFields } from "../state/fileStats.js";
-
-export async function runRemoteSyncLoop(
-  adapter: DropboxAdapter,
-  remoteRoot: string,
-  localRootMap: (remotePath: string) => string | null,
-) : Promise<void> {
-  let cursor = await adapter.getLatestCursor(remoteRoot);
-
-  while (true) {
-    let changed: boolean;
-    try {
-      changed = await adapter.longpoll(cursor);
-    } catch(error) {
-      console.error("Longpoll failed, retrying in 5s:", error);
-      await new Promise((r) => setTimeout(r, 5000));
-      continue;
-    }
-
-    if (!changed) continue;
-    
-    try {
-      const { entries, cursor: newCursor } = await adapter.listFolderContinue(cursor);
-      cursor = newCursor;
-
-      for (const entry of entries) {
-        try {
-          await processRemoteChange(adapter, entry, localRootMap);
-        } catch (error) {
-          console.error(`Failed to process remote change for ${entry.path}:`, error)
-        }
-      }
-    } catch (error) {
-      console.error("Failed to process remote changes:", error);
-    }
-  } 
-}
+import path from "path";
 
 async function processRemoteChange(
   adapter: DropboxAdapter,
@@ -70,4 +34,61 @@ async function processRemoteChange(
     const updated: SyncIndex = { ...index, [localPath]: updatedRecord };
     saveIndex(updated);
   });
+}
+
+export async function runRemoteSyncLoop(
+  adapter: DropboxAdapter,
+  remoteRoot: string,
+  localRootMap: (remotePath: string) => string | null,
+) : Promise<void> {
+  let cursor = await adapter.getLatestCursor(remoteRoot);
+
+  while (true) {
+    let changed: boolean;
+    try {
+      changed = await adapter.longpoll(cursor);
+    } catch(error) {
+      console.error("Longpoll failed, retrying in 5s:", error);
+      await new Promise((r) => setTimeout(r, 5000));
+      continue;
+    }
+
+    if (!changed) continue;
+    
+    let entries;
+    try {
+      const result = await adapter.listFolderContinue(cursor);
+      entries = result.entries;
+      cursor = result.cursor;
+    } catch (error) {
+      console.error("Failed to fetch remote changes", error);
+      continue;
+    }
+
+    for (const entry of entries) {
+      try {
+        await processRemoteChange(adapter, entry, localRootMap);
+      } catch (error) {
+        console.error(`Failed to process remote change for ${entry.path}:`, error);
+      }
+    }
+  }
+}
+
+export function makeLocalRootMap(config: Config): (remotePath: string) => string | null {
+  return (remotePath): string | null => {
+    const parts = remotePath.split("/").filter(Boolean);
+    if (parts.length < 2) return null;
+
+    const [folderLabel, ...rest] = parts;
+    const relativePath = rest.join("/");
+
+    if (folderLabel === "saves") {
+      return path.join(config.retroarchSaveDir, relativePath);
+    } else if (folderLabel === "states") {
+      return path.join(config.retroarchStateDir, relativePath);
+    } else {
+      return null;
+    }
+  };
 }

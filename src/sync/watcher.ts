@@ -1,10 +1,12 @@
 import chokidar from "chokidar";
 import { loadConfig } from "../config.js";
 import { generateIndex, loadIndex, removeFromIndex, saveIndex, updateIndex } from "../state/index.js";
+import { makeLocalRootMap, runRemoteSyncLoop } from "./remoteWatcher.js";
 import syncFile from "./engine.js";
-import { CloudAdapter } from "../cloud/adapter.js";
+// import { CloudAdapter } from "../cloud/adapter.js";
 import { SyncResult } from "./engine.js";
 import { withPathLock } from "./pathLock.js";
+import { DropboxAdapter } from "../cloud/dropbox.js";
 
 const FIXED_SUFFIXES = [".srm", ".sav", ".srm.bak", ".state"];
 const STATE_SLOT_PATTERN = /\.state\d$/;
@@ -42,8 +44,8 @@ function logResults(eventType: "initialSync" | "add" | "change" | "unlink", resu
 }
 
 
-
-export async function runWatcher(adapter: CloudAdapter) {
+// TODO: refactor when the app supports multiple adapters
+export async function runWatcher(adapter: DropboxAdapter) {
   const config = loadConfig();
   const existing = loadIndex();
 
@@ -101,4 +103,9 @@ export async function runWatcher(adapter: CloudAdapter) {
   watcher.on("change", (filePath) => processOnEvent(filePath, "change"));
 
   watcher.on("unlink", (filePath) => processOnEvent(filePath, "unlink"));
+
+  const localRootMap = makeLocalRootMap(config);
+  runRemoteSyncLoop(adapter, "/", localRootMap).catch((error) => {
+    console.error("Remote sync loop crashed:", error);
+  });
 }

@@ -48,10 +48,11 @@ async function main() {
     }
     
     // TODO: dynamically create adapter based on config once other adapters are supported.
-    const adapter: CloudAdapter = new DropboxAdapter(credentials.accessToken);
+    const adapter: CloudAdapter = new DropboxAdapter();
 
     try {
-      await runWatcher(adapter);
+      // TODO: support multiple adapters down the line.
+      await runWatcher(adapter as DropboxAdapter);
     } catch (error) {
       console.error("Error running watcher: ", error);
       process.exit(1);
