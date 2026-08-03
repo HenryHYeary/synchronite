@@ -22,7 +22,7 @@ function formatFileEntries(entries: DropboxEntry[]): RemoteFileRecord[] {
 
 export class DropboxAdapter implements CloudAdapter {
   async upload(localPath: string, remotePath: string): Promise<{ contentHash: string }> {
-    const token = getValidAccessToken();
+    const token = await getValidAccessToken();
     const file = await fs.readFile(localPath);
   
     const response = await fetch("https://content.dropboxapi.com/2/files/upload", { method: "POST", headers: {
@@ -42,7 +42,7 @@ export class DropboxAdapter implements CloudAdapter {
   }
 
   async download(remotePath: string, localPath: string): Promise<void> {
-    const token = getValidAccessToken();
+    const token = await getValidAccessToken();
     const response = await fetch("https://content.dropboxapi.com/2/files/download", { method: "POST", headers: {
       "Authorization": `Bearer ${token}`,
       "Dropbox-API-Arg": JSON.stringify({ path: remotePath }),
@@ -58,7 +58,7 @@ export class DropboxAdapter implements CloudAdapter {
   }
 
   async listRemote(prefix: string): Promise<RemoteFileRecord[]> {
-    const token = getValidAccessToken();
+    const token = await getValidAccessToken();
     const response = await fetch("https://api.dropboxapi.com/2/files/list_folder", { method: "POST", headers: {
       "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
@@ -76,7 +76,7 @@ export class DropboxAdapter implements CloudAdapter {
   }
 
   async deleteRemote(remotePath: string): Promise<void> {
-    const token = getValidAccessToken();
+    const token = await getValidAccessToken();
     const response = await fetch("https://api.dropboxapi.com/2/files/delete_v2", { method: "POST", headers: {
       "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json",
@@ -90,11 +90,11 @@ export class DropboxAdapter implements CloudAdapter {
   }
 
   async getLatestCursor(prefix: string): Promise<string> {
-    const token = getValidAccessToken();
+    const token = await getValidAccessToken();
     const response = await fetch("https://api.dropboxapi.com/2/files/list_folder/get_latest_cursor", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer  ${token}`,
+        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ path: prefix, recursive: true }),
@@ -109,11 +109,9 @@ export class DropboxAdapter implements CloudAdapter {
   }
 
   async longpoll(cursor: string, timeoutSeconds: number = 30): Promise<boolean> {
-    const token = getValidAccessToken();
     const response = await fetch("https://notify.dropboxapi.com/2/files/list_folder/longpoll", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ cursor, timeout: timeoutSeconds}),
@@ -128,7 +126,7 @@ export class DropboxAdapter implements CloudAdapter {
   }
 
   async listFolderContinue(cursor: string): Promise<{ entries: RemoteFileRecord[]; cursor: string; hasMore: boolean }> {
-    const token = getValidAccessToken();
+    const token = await getValidAccessToken();
     const response = await fetch("https://api.dropboxapi.com/2/files/list_folder/continue", {
       method: "POST",
       headers: {
