@@ -66,7 +66,7 @@ export async function authenticate(): Promise<void> {
 }
 
 export async function refreshAccessToken(refreshToken: string): Promise<RefreshResponse> {
-  const response = await fetch("https://api.dropbox.com/oauth2/toke", {
+  const response = await fetch("https://api.dropbox.com/oauth2/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
