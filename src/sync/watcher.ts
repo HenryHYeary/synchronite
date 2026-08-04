@@ -5,7 +5,7 @@ import { downloadAndRecordFile } from "./remoteWatcher.js";
 import { loadConfig } from "../config.js";
 import { generateIndex, loadIndex, removeFromIndex, saveIndex, SyncIndex, updateIndex } from "../state/index.js";
 import { makeLocalRootMap, runRemoteSyncLoop } from "./remoteWatcher.js";
-import syncFile from "./engine.js";
+import syncFile, { delay } from "./engine.js";
 // import { CloudAdapter } from "../cloud/adapter.js";
 import { SyncResult } from "./engine.js";
 import { withPathLock } from "./pathLock.js";
@@ -60,6 +60,8 @@ export async function runWatcher(adapter: DropboxAdapter) {
   const conflicts = diffs.filter(d => d.localChanged && d.remoteChanged);
   const remoteOnly = diffs.filter(d => !d.localChanged && d.remoteChanged);
 
+  const DELAY_MS = 500;
+
   for (const conflict of conflicts) {
     const choice = await p.select({
       message: `Conflict: ${conflict.localPath} changed both locally and in the cloud. Which version do you want to keep?`,
@@ -104,6 +106,7 @@ export async function runWatcher(adapter: DropboxAdapter) {
     } else {
       delete localFilesForSync[conflict.localPath];
     }
+    delay(DELAY_MS);
   }
 
   const { results, confirmedIndex } = await syncFile(adapter, indexAfterConflicts, localFilesForSync, config);
@@ -119,6 +122,7 @@ export async function runWatcher(adapter: DropboxAdapter) {
     } catch (error) {
       console.error(`Failed to download ${entry.path}:`, error);
     }
+    delay(DELAY_MS);
   }
 
   const watcher = chokidar.watch(
