@@ -1,6 +1,9 @@
 import chokidar from "chokidar";
+import * as p from "@clack/prompts";
+import { detectConflicts } from "./conflicts.js";
+import { downloadAndRecordFile } from "./remoteWatcher.js";
 import { loadConfig } from "../config.js";
-import { generateIndex, loadIndex, removeFromIndex, saveIndex, updateIndex } from "../state/index.js";
+import { generateIndex, loadIndex, removeFromIndex, saveIndex, SyncIndex, updateIndex } from "../state/index.js";
 import { makeLocalRootMap, runRemoteSyncLoop } from "./remoteWatcher.js";
 import syncFile from "./engine.js";
 // import { CloudAdapter } from "../cloud/adapter.js";
@@ -47,17 +50,75 @@ function logResults(eventType: "initialSync" | "add" | "change" | "unlink", resu
 // TODO: refactor when the app supports multiple adapters
 export async function runWatcher(adapter: DropboxAdapter) {
   const config = loadConfig();
-  const existing = loadIndex();
+  const localRootMap = makeLocalRootMap(config);
 
-  try {
-    const newIndex = await generateIndex(config.retroarchSaveDir, config.retroarchStateDir);
+  const localIndex = loadIndex();
+  const currentLocalFiles = await generateIndex(config.retroarchSaveDir, config.retroarchStateDir);
+  const remoteEntries = await adapter.listRemote("/");
 
-    const { results, confirmedIndex } = await syncFile(adapter, existing, newIndex, config);
-    saveIndex(confirmedIndex);
+  const diffs = await detectConflicts(localIndex, currentLocalFiles, remoteEntries, localRootMap);
+  const conflicts = diffs.filter(d => d.localChanged && d.remoteChanged);
+  const remoteOnly = diffs.filter(d => !d.localChanged && d.remoteChanged);
 
-    logResults("initialSync", results);
-  } catch (error) {
-    throw new Error("Failed initial sync", { cause: error });
+  for (const conflict of conflicts) {
+    const choice = await p.select({
+      message: `Conflict: ${conflict.localPath} changed both locally and in the cloud. Which version do you want to keep?`,
+      options: [
+        { value: "local", label: "Keep local version (overwrite cloud)", },
+        { value: "remote", label: "Keep remote version (overwrite local)", },
+      ]
+    });
+
+    if (p.isCancel(choice)) {
+      p.cancel("Setup cancelled");
+      process.exit(0);
+    }
+
+    await withPathLock(conflict.localPath, async () => {
+      if (choice === "local") {
+        const record = currentLocalFiles[conflict.localPath];
+        const { contentHash } = await adapter.upload(conflict.localPath, record.remotePath);
+
+        const updated: SyncIndex = {
+          ...loadIndex(),
+          [conflict.localPath]: {
+            ...record,
+            remoteContentHash: contentHash,
+            lastSynced: Date.now(),  
+          },
+        };
+        saveIndex(updated);
+      } else {
+        const remoteEntry = conflict.remoteEntry!;
+        await downloadAndRecordFile(adapter, remoteEntry.path, conflict.localPath, remoteEntry.contentHash);
+      }
+    });
+  }
+
+  const indexAfterConflicts = loadIndex();
+
+  const localFilesForSync: SyncIndex = { ...currentLocalFiles };
+  for (const conflict of conflicts) {
+    if (indexAfterConflicts[conflict.localPath]) {
+      localFilesForSync[conflict.localPath] = indexAfterConflicts[conflict.localPath];
+    } else {
+      delete localFilesForSync[conflict.localPath];
+    }
+  }
+
+  const { results, confirmedIndex } = await syncFile(adapter, indexAfterConflicts, localFilesForSync, config);
+  saveIndex(confirmedIndex);
+  logResults("initialSync", results)
+
+  for (const diff of remoteOnly) {
+    const entry = diff.remoteEntry!;
+    try {
+      await withPathLock(diff.localPath, async () => {
+        await downloadAndRecordFile(adapter, entry.path, diff.localPath, entry.contentHash);
+      });
+    } catch (error) {
+      console.error(`Failed to download ${entry.path}:`, error);
+    }
   }
 
   const watcher = chokidar.watch(
@@ -104,7 +165,7 @@ export async function runWatcher(adapter: DropboxAdapter) {
 
   watcher.on("unlink", (filePath) => processOnEvent(filePath, "unlink"));
 
-  const localRootMap = makeLocalRootMap(config);
+  // const localRootMap = makeLocalRootMap(config);
   runRemoteSyncLoop(adapter, "/", localRootMap).catch((error) => {
     console.error("Remote sync loop crashed:", error);
   });

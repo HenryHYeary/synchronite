@@ -20,19 +20,7 @@ async function processRemoteChange(
 
     if (existing?.remoteContentHash === entry.contentHash) return;
 
-    await adapter.download(entry.path, localPath);
-
-    const diskDerivedFields = await computeDiskDerivedFields(localPath);
-
-    const updatedRecord: FileRecord = {
-      ...diskDerivedFields,
-      lastSynced: Date.now(),
-      remotePath: entry.path,
-      remoteContentHash: entry.contentHash,
-    };
-
-    const updated: SyncIndex = { ...index, [localPath]: updatedRecord };
-    saveIndex(updated);
+    await downloadAndRecordFile(adapter, entry.path, localPath, entry.contentHash);
   });
 }
 
@@ -91,4 +79,25 @@ export function makeLocalRootMap(config: Config): (remotePath: string) => string
       return null;
     }
   };
+}
+
+export async function downloadAndRecordFile(
+  adapter: DropboxAdapter,
+  remotePath: string,
+  localPath: string,
+  contentHash: string,
+): Promise<void> {
+  await adapter.download(remotePath, localPath);
+  const diskFields = await computeDiskDerivedFields(localPath);
+
+  const updated: SyncIndex = {
+    ...loadIndex(),
+    [localPath]: {
+      ...diskFields,
+      lastSynced: Date.now(),
+      remotePath,
+      remoteContentHash: contentHash,
+    },
+  };
+  saveIndex(updated);
 }
