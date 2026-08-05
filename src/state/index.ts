@@ -26,7 +26,7 @@ export interface IndexDiff {
   deleted: string[];
 }
 
-const SAVE_PATTERNS = ["**/*.srm", "**/*.sav", "**/*.srm.bak"];
+const SAVE_PATTERNS = ["**/*.srm", "**/*.sav", "**/*.srm.bak", "**/*.ps2", "**/*.raw", "**/*.gci"];
 const STATE_PATTERNS = ["**/*.state", "**/*.state[0-9]", "**/*.state[0-9][0-9]"];
 
 export type SyncIndex = Record<string, FileRecord>
