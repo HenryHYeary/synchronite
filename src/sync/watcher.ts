@@ -2,7 +2,7 @@ import chokidar from "chokidar";
 import * as p from "@clack/prompts";
 import { detectConflicts } from "./conflicts.js";
 import { downloadAndRecordFile } from "./remoteWatcher.js";
-import { loadConfig } from "../config.js";
+import { Config, loadConfig } from "../config.js";
 import { generateIndex, loadIndex, removeFromIndex, saveIndex, SyncIndex, updateIndex } from "../state/index.js";
 import { makeLocalRootMap, runRemoteSyncLoop } from "./remoteWatcher.js";
 import syncFile, { delay } from "./engine.js";
@@ -14,9 +14,9 @@ import { DropboxAdapter } from "../cloud/dropbox.js";
 const FIXED_SUFFIXES = [".srm", ".sav", ".srm.bak", ".state"];
 const STATE_SLOT_PATTERN = /\.state\d$/;
 
-function isWatchedFile(filePath: string): boolean {
+function isWatchedFile(filePath: string, config: Config): boolean {
   return (
-    FIXED_SUFFIXES.some(suffix => filePath.endsWith(suffix)) ||
+    [...FIXED_SUFFIXES, ...config.additionalExtensions].some(suffix => filePath.endsWith(suffix)) ||
     STATE_SLOT_PATTERN.test(filePath)
   )
 }
@@ -126,7 +126,7 @@ export async function runWatcher(adapter: DropboxAdapter) {
   }
 
   const watcher = chokidar.watch(
-    [config.retroarchSaveDir, config.retroarchStateDir],
+    [config.retroarchSaveDir, config.retroarchStateDir, ...config.additionalDirs.map(e => e.path)],
     { 
       persistent: true,
       ignoreInitial: true,
@@ -134,7 +134,7 @@ export async function runWatcher(adapter: DropboxAdapter) {
       ignored: (filePath) => {
         const hasExtension = /\.[^./\\]+$/.test(filePath);
         if (!hasExtension) return false;
-        return !isWatchedFile(filePath);
+        return !isWatchedFile(filePath, config);
       },
       awaitWriteFinish: {
         stabilityThreshold: 500,

@@ -64,7 +64,6 @@ export async function runInit(): Promise<void> {
     retroarchSaveDir: saves,
     retroarchStateDir: states,
     cloudProvider: provider,
-    cloudConfig: {},
     syncIntervalMs: 5000,
     modificationStrategy: "latest-wins",
   };

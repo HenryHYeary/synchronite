@@ -64,6 +64,12 @@ export async function runRemoteSyncLoop(
 }
 
 export function makeLocalRootMap(config: Config): (remotePath: string) => string | null {
+  const labelToDir = new Map<string, string>([
+    ["saves", config.retroarchSaveDir],
+    ["states", config.retroarchStateDir],
+    ...config.additionalDirs.map(({ path, label }): [string, string] => [label, path]),
+  ]);
+
   return (remotePath): string | null => {
     const parts = remotePath.split("/").filter(Boolean);
     if (parts.length < 2) return null;
@@ -71,13 +77,10 @@ export function makeLocalRootMap(config: Config): (remotePath: string) => string
     const [folderLabel, ...rest] = parts;
     const relativePath = rest.join("/");
 
-    if (folderLabel === "saves") {
-      return path.join(config.retroarchSaveDir, relativePath);
-    } else if (folderLabel === "states") {
-      return path.join(config.retroarchStateDir, relativePath);
-    } else {
-      return null;
-    }
+    const rootDir = labelToDir.get(folderLabel);
+    if (!rootDir) return null;
+
+    return path.join(rootDir, relativePath);
   };
 }
 

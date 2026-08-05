@@ -8,6 +8,7 @@ import { CloudAdapter } from "./cloud/adapter.js";
 import { DropboxAdapter } from "./cloud/dropbox.js";
 import { Credentials, loadCredentials } from "./auth/credentials.js";
 import { runWatcher } from "./sync/watcher.js";
+import { runAddDirectory } from "./commands/addDirectory.js";
 
 const command = process.argv[2];
 
@@ -16,6 +17,8 @@ ensureAppDirs();
 async function main() {
   if (command == "init") {
     await runInit();
+  } else if (command === "add-directory") {
+    await runAddDirectory();
   } else {
     if (!fs.existsSync(APP_PATHS.config)) {
       console.error("No config found. Run `synchronite init` first.");
