@@ -11,7 +11,7 @@ import { SyncResult } from "./engine.js";
 import { withPathLock } from "./pathLock.js";
 import { DropboxAdapter } from "../cloud/dropbox.js";
 
-const FIXED_SUFFIXES = [".srm", ".sav", ".srm.bak", ".state"];
+const FIXED_SUFFIXES = [".srm", ".sav", ".srm.bak", ".state", ".ps2", ".raw"];
 const STATE_SLOT_PATTERN = /\.state\d$/;
 
 function isWatchedFile(filePath: string, config: Config): boolean {
@@ -169,7 +169,6 @@ export async function runWatcher(adapter: DropboxAdapter) {
 
   watcher.on("unlink", (filePath) => processOnEvent(filePath, "unlink"));
 
-  // const localRootMap = makeLocalRootMap(config);
   runRemoteSyncLoop(adapter, "/", localRootMap).catch((error) => {
     console.error("Remote sync loop crashed:", error);
   });

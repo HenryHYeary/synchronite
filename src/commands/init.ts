@@ -1,8 +1,10 @@
 import * as p from "@clack/prompts";
+import path from "path";
 import fs from "fs";
 import { authenticate } from "../auth/oauth.js";
 import { getDefaultRetroarchPaths, Paths } from "../retroarch.js";
 import { APP_PATHS } from "../paths.js";
+import { ConfigSchema } from "../config.js";
 
 export async function runInit(): Promise<void> {
   p.intro("Synchronite setup");
@@ -61,13 +63,15 @@ export async function runInit(): Promise<void> {
   }
 
   const config = {
-    retroarchSaveDir: saves,
-    retroarchStateDir: states,
+    retroarchSaveDir: path.resolve(saves),
+    retroarchStateDir: path.resolve(states),
     cloudProvider: provider,
     syncIntervalMs: 5000,
     modificationStrategy: "latest-wins",
   };
 
-  fs.writeFileSync(APP_PATHS.config, JSON.stringify(config, null, 2));
+  const result = ConfigSchema.safeParse(config);
+
+  fs.writeFileSync(APP_PATHS.config, JSON.stringify(result.data, null, 2));
   p.outro(`Config saved to ${APP_PATHS.config}`);
 }
