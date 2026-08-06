@@ -1,5 +1,4 @@
 import { APP_PATHS } from "../paths.js";
-import fg from "fast-glob";
 import fs from "fs";
 import { computeDiskDerivedFields } from "./fileStats.js";
 import { Config, loadConfig } from "../config.js";
@@ -22,11 +21,13 @@ export interface PathRecord {
 export interface IndexDiff {
   added: PathRecord[];
   modified: PathRecord[];
-  deleted: string[];
+  deleted: PathRecord[];
 }
 
-const SAVE_PATTERNS = ["**/*.srm", "**/*.sav", "**/*.srm.bak", "**/*.ps2", "**/*.raw", "**/*.gci"];
-const STATE_PATTERNS = ["**/*.state", "**/*.state[0-9]", "**/*.state[0-9][0-9]"];
+const SAVE_PATTERNS = [".srm", ".sav", ".srm.bak", ".ps2", ".raw", ".gci"];
+const STATE_PATTERNS = [".state"];
+
+const STATE_SLOT_PATTERN = /\.state\d+$/;
 
 export type SyncIndex = Record<string, FileRecord>
 
@@ -46,8 +47,17 @@ export function saveIndex(index: SyncIndex) {
   fs.writeFileSync(APP_PATHS.index, JSON.stringify(index, null, 2));
 }
 
-async function findFiles(dir: string, patterns: string[]): Promise<string[]> {
-  return fg(patterns.map(p => `${dir}/${p}`), { onlyFiles: true });
+async function findFiles(
+  dir: string,
+  extensions: string[],
+  includeStateSlots: boolean = false,
+): Promise<string[]> {
+  const entries = await fs.promises.readdir(dir, { withFileTypes: true, recursive: true });
+  return entries.filter((entry) => {
+    const matchesExtension = extensions.some((ext) => entry.name.endsWith(ext));
+    const matchesStateSlot = includeStateSlots && STATE_SLOT_PATTERN.test(entry.name);
+    return matchesExtension || matchesStateSlot;
+  }).map((entry) => path.resolve(entry.parentPath, entry.name));
 }
 
 export async function generateIndex(config: Config): Promise<SyncIndex> {
@@ -55,11 +65,15 @@ export async function generateIndex(config: Config): Promise<SyncIndex> {
   const allPaths = await Promise.all([
     findFiles(retroarchSaveDir, SAVE_PATTERNS),
     findFiles(retroarchStateDir, STATE_PATTERNS),
-    ...additionalDirs.map((e: { path: string, label: string }) => findFiles(e.path, additionalExtensions))
+    ...additionalDirs.map((e: { path: string, label: string }) => {
+      console.log("DEBUG - scanning additional dir:", e.path, "with extensions:", additionalExtensions);
+      return findFiles(e.path, additionalExtensions);
+    })
   ]);
 
   let index = loadIndex();
 
+  console.log("DEBUG - all paths found:", allPaths.flat());
   for (const p of allPaths.flat()) {
     index = await updateIndex(index, p);
   }
@@ -67,20 +81,27 @@ export async function generateIndex(config: Config): Promise<SyncIndex> {
   return index;
 }
 
-export async function updateIndex(index: SyncIndex, file: string): Promise<SyncIndex> {
-  const config = loadConfig();
-  const relativeToSave = path.relative(config.retroarchSaveDir, file);
-  const relativeToState = path.relative(config.retroarchStateDir, file);
-  const inSaveDir = !relativeToSave.startsWith("..");
-  const inStateDir = !relativeToState.startsWith("..");
+function computeRemotePath(file: string, config: Config): string {
+  const watchedDirs = [
+    { path: config.retroarchSaveDir, label: "saves" },
+    { path: config.retroarchStateDir, label: "states" },
+    ...config.additionalDirs,
+  ];
 
-  if (inSaveDir === inStateDir) {
-    throw new Error(`File ${file} is not inside a configured save or state directory`);
+  for (const { path: dir, label } of watchedDirs) {
+    const relative = path.relative(dir, file);
+    const isInside = !relative.startsWith("..") && !path.isAbsolute(relative);
+    if (isInside) {
+      return `/${label}/${relative}`;
+    }
   }
 
-  const folderLabel = inSaveDir ? "saves" : "states";
-  const relativePath = inSaveDir ? relativeToSave : relativeToState;
-  const remotePath = `/${folderLabel}/${relativePath}`;
+  throw new Error(`File ${file} is not inside any configured watched directory`);
+}
+
+export async function updateIndex(index: SyncIndex, file: string): Promise<SyncIndex> {
+  const config = loadConfig();
+  const remotePath = computeRemotePath(file, config);
 
   try {
     const stat = await fs.promises.stat(file);
@@ -118,7 +139,7 @@ export function removeFromIndex(index: SyncIndex, file: string): SyncIndex {
 export function diffIndex(oldIndex: SyncIndex, newIndex: SyncIndex): IndexDiff {
   const added: PathRecord[] = [];
   const modified: PathRecord[] = [];
-  const deleted: string[] = [];
+  const deleted: PathRecord[] = [];
 
   for (const [path, record] of Object.entries(newIndex)) {
     if (!oldIndex[path]) {
@@ -128,9 +149,9 @@ export function diffIndex(oldIndex: SyncIndex, newIndex: SyncIndex): IndexDiff {
     }
   }
 
-  for (const path of Object.keys(oldIndex)) {
+  for (const [path, record] of Object.entries(oldIndex)) {
     if (!newIndex[path]) {
-      deleted.push(path);
+      deleted.push({ path, record });
     }
   }
 

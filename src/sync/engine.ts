@@ -23,16 +23,17 @@ export async function uploadEntry(adapter: CloudAdapter, entry: PathRecord): Pro
   }
 }
 
-export async function deleteEntry(adapter: CloudAdapter, filePath: string, config: Config): Promise<SyncResult> {
+export async function deleteEntry(adapter: CloudAdapter, entry: PathRecord, config: Config): Promise<SyncResult> {
+  const { remotePath } = entry.record;
   if (!config.propagateDeletes) {
-    return { isUpload: false, path: filePath, success: true, skipped: true };
+    return { isUpload: false, path: remotePath, success: true, skipped: true };
   }
 
   try {
-    await adapter.deleteRemote(filePath);
-    return { isUpload: false, path: filePath, success: true };
+    await adapter.deleteRemote(remotePath);
+    return { isUpload: false, path: remotePath, success: true };
   } catch (error) {
-    return { isUpload: false, path: filePath, success: false, error };
+    return { isUpload: false, path: remotePath, success: false, error };
   }
 }
 
@@ -60,10 +61,11 @@ export default async function syncFile(adapter: DropboxAdapter, oldIndex: SyncIn
   const { added, modified, deleted } = diffIndex(oldIndex, newIndex);
   
   const uploadEntries = [...added, ...modified];
+  const deletedEntries = deleted;
   const DELAY_MS = 500;
 
   const uploadResults = await runWithDelay(uploadEntries, (entry) => uploadEntry(adapter, entry), DELAY_MS);
-  const deleteResults = await runWithDelay(deleted, (entry) => deleteEntry(adapter, entry, config), DELAY_MS);
+  const deleteResults = await runWithDelay(deletedEntries, (entry) => deleteEntry(adapter, entry, config), DELAY_MS);
 
   const results = [...uploadResults, ...deleteResults];
 
