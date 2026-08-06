@@ -66,14 +66,11 @@ export async function generateIndex(config: Config): Promise<SyncIndex> {
     findFiles(retroarchSaveDir, SAVE_PATTERNS),
     findFiles(retroarchStateDir, STATE_PATTERNS),
     ...additionalDirs.map((e: { path: string, label: string }) => {
-      console.log("DEBUG - scanning additional dir:", e.path, "with extensions:", additionalExtensions);
       return findFiles(e.path, additionalExtensions);
     })
   ]);
 
   let index = loadIndex();
-
-  console.log("DEBUG - all paths found:", allPaths.flat());
   for (const p of allPaths.flat()) {
     index = await updateIndex(index, p);
   }
