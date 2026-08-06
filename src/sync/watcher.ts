@@ -53,7 +53,7 @@ export async function runWatcher(adapter: DropboxAdapter) {
   const localRootMap = makeLocalRootMap(config);
 
   const localIndex = loadIndex();
-  const currentLocalFiles = await generateIndex(config.retroarchSaveDir, config.retroarchStateDir);
+  const currentLocalFiles = await generateIndex(config);
   const remoteEntries = await adapter.listRemote("/");
 
   const diffs = await detectConflicts(localIndex, currentLocalFiles, remoteEntries, localRootMap);

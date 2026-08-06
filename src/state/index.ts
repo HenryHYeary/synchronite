@@ -1,9 +1,8 @@
 import { APP_PATHS } from "../paths.js";
-import crypto from "crypto";
 import fg from "fast-glob";
 import fs from "fs";
 import { computeDiskDerivedFields } from "./fileStats.js";
-import { loadConfig } from "../config.js";
+import { Config, loadConfig } from "../config.js";
 import path from "path";
 
 
@@ -51,15 +50,17 @@ async function findFiles(dir: string, patterns: string[]): Promise<string[]> {
   return fg(patterns.map(p => `${dir}/${p}`), { onlyFiles: true });
 }
 
-export async function generateIndex(savesDir: string, statesDir: string): Promise<SyncIndex> {
-  const [saveFilePaths, stateFilePaths] = await Promise.all([
-    findFiles(savesDir, SAVE_PATTERNS),
-    findFiles(statesDir, STATE_PATTERNS),
+export async function generateIndex(config: Config): Promise<SyncIndex> {
+  const { retroarchSaveDir, retroarchStateDir, additionalDirs, additionalExtensions } = config;
+  const allPaths = await Promise.all([
+    findFiles(retroarchSaveDir, SAVE_PATTERNS),
+    findFiles(retroarchStateDir, STATE_PATTERNS),
+    ...additionalDirs.map((e: { path: string, label: string }) => findFiles(e.path, additionalExtensions))
   ]);
 
   let index = loadIndex();
 
-  for (const p of [...saveFilePaths, ...stateFilePaths]) {
+  for (const p of allPaths.flat()) {
     index = await updateIndex(index, p);
   }
 
