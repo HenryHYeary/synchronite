@@ -53,6 +53,7 @@ async function findFiles(
   includeStateSlots: boolean = false,
 ): Promise<string[]> {
   const entries = await fs.promises.readdir(dir, { withFileTypes: true, recursive: true });
+  if (extensions.length === 1 && extensions[0] === "*") return entries.map((entry) => path.resolve(entry.parentPath, entry.name));
   return entries.filter((entry) => {
     const matchesExtension = extensions.some((ext) => entry.name.endsWith(ext));
     const matchesStateSlot = includeStateSlots && STATE_SLOT_PATTERN.test(entry.name);
@@ -61,12 +62,12 @@ async function findFiles(
 }
 
 export async function generateIndex(config: Config): Promise<SyncIndex> {
-  const { retroarchSaveDir, retroarchStateDir, additionalDirs, additionalExtensions } = config;
+  const { retroarchSaveDir, retroarchStateDir, additionalDirs } = config;
   const allPaths = await Promise.all([
     findFiles(retroarchSaveDir, SAVE_PATTERNS),
     findFiles(retroarchStateDir, STATE_PATTERNS),
-    ...additionalDirs.map((e: { path: string, label: string }) => {
-      return findFiles(e.path, additionalExtensions);
+    ...additionalDirs.map((e: { path: string, label: string, extensions: string[] }) => {
+      return findFiles(e.path, e.extensions);
     })
   ]);
 

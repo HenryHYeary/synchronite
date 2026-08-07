@@ -1,5 +1,6 @@
 import chokidar from "chokidar";
 import * as p from "@clack/prompts";
+import path from "path";
 import { detectConflicts } from "./conflicts.js";
 import { downloadAndRecordFile } from "./remoteWatcher.js";
 import { Config, loadConfig } from "../config.js";
@@ -15,8 +16,19 @@ const FIXED_SUFFIXES = [".srm", ".sav", ".srm.bak", ".state", ".ps2", ".raw"];
 const STATE_SLOT_PATTERN = /\.state\d$/;
 
 function isWatchedFile(filePath: string, config: Config): boolean {
+  const { additionalDirs } = config;
+  const additionalExtensions = additionalDirs.find(({ path: dirPath }) => {
+    const relative = path.relative(dirPath, filePath);
+    return !relative.startsWith("..") && !path.isAbsolute(relative);
+  })?.extensions;
+  let suffixes = [...FIXED_SUFFIXES];
+  
+  if (additionalExtensions) {
+    suffixes = suffixes.concat(additionalExtensions);
+  }
+
   return (
-    [...FIXED_SUFFIXES, ...config.additionalExtensions].some(suffix => filePath.endsWith(suffix)) ||
+    suffixes.some(suffix => filePath.endsWith(suffix)) ||
     STATE_SLOT_PATTERN.test(filePath)
   )
 }

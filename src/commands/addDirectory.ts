@@ -45,22 +45,22 @@ export async function runAddDirectory(): Promise<void> {
 
   if (p.isCancel(label)) { p.cancel("Cancelled"); process.exit(0) }
 
-  const newExtensions = await p.text({
-    message: "File extensions to watch in this directory (comma-separated, e.g. .mcd,.mcr)",
+  const extensions = await p.text({
+    message: "File extensions to watch in this directory (comma-separated, e.g. .mcd,.mcr) or * for all files",
     validate(value) {
       if (!value) return "Extensions are required";
+      if (value.trim() === "*") return "All files will be watched";
       const exts = value.split(",").map(e => e.trim());
       const invalid = exts.find(e => !/^\.[a-zA-Z0-9]+$/.test(e));
       if (invalid) return `Invalid extension: "${invalid}" - each must start with a period, e.g. .mcd`;
     }
   });
 
-  if (p.isCancel(newExtensions)) { p.cancel("Cancelled"); process.exit(0); }
+  if (p.isCancel(extensions)) { p.cancel("Cancelled"); process.exit(0); }
 
   const updatedConfig = {
   ...config,
-  additionalDirs: [...config.additionalDirs, { path: path.resolve(newDir), label }],
-  additionalExtensions: [...config.additionalExtensions, ...newExtensions.split(",").map(e => e.trim())],
+  additionalDirs: [...config.additionalDirs, { path: path.resolve(newDir), label, extensions: extensions.split(",").map(s => s.trim()) }],
 };
 
   fs.writeFileSync(APP_PATHS.config, JSON.stringify(updatedConfig, null, 2));

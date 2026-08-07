@@ -1,6 +1,5 @@
 import { Config } from "../config.js";
 import { DropboxAdapter } from "../cloud/dropbox.js";
-import { FileRecord } from "../state/index.js";
 import { loadIndex, saveIndex, SyncIndex } from "../state/index.js";
 import { withPathLock } from "./pathLock.js";
 import { computeDiskDerivedFields } from "../state/fileStats.js";
@@ -91,6 +90,7 @@ export async function downloadAndRecordFile(
   contentHash: string,
 ): Promise<void> {
   await adapter.download(remotePath, localPath);
+  console.log(`Pulled remote change: ${remotePath} -> ${localPath}`);
   const diskFields = await computeDiskDerivedFields(localPath);
 
   const updated: SyncIndex = {
