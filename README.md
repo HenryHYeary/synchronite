@@ -11,8 +11,7 @@ Think of it as a CLI version of Steam's cloud save support.
 
 ## How it works
 Synchronite watches your RetroArch save/state folders, hashes files to detect 
-changes, and syncs them to Dropbox. If the same save is modified on two devices 
-before syncing, [explain what actually happens — flagged? merged? kept both?].
+changes, and syncs them to Dropbox.
 
 ## Limitations (v1)
 - Dropbox only (more providers planned)
