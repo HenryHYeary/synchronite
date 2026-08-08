@@ -25,6 +25,8 @@ export class DropboxAdapter implements CloudAdapter {
   async upload(localPath: string, remotePath: string): Promise<{ contentHash: string }> {
     const token = await getValidAccessToken();
     const file = await fs.readFile(localPath);
+
+    console.log(`DEBUG - remotePath is ${remotePath} `);
   
     const response = await fetch("https://content.dropboxapi.com/2/files/upload", { method: "POST", headers: {
       "Authorization": `Bearer ${token}`,

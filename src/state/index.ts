@@ -90,7 +90,8 @@ function computeRemotePath(file: string, config: Config): string {
     const relative = path.relative(dir, file);
     const isInside = !relative.startsWith("..") && !path.isAbsolute(relative);
     if (isInside) {
-      return `/${label}/${relative}`;
+      const normalizedRelative = relative.split(path.sep).join("/");
+      return `/${label}/${normalizedRelative}`;
     }
   }
 
