@@ -53,8 +53,13 @@ async function findFiles(
   includeStateSlots: boolean = false,
 ): Promise<string[]> {
   const entries = await fs.promises.readdir(dir, { withFileTypes: true, recursive: true });
-  if (extensions.length === 1 && extensions[0] === "*") return entries.map((entry) => path.resolve(entry.parentPath, entry.name));
+  if (extensions.includes("*")) {
+    return entries
+            .filter((entry) => entry.isFile())
+            .map((entry) => path.resolve(entry.parentPath, entry.name))
+  }
   return entries.filter((entry) => {
+    if (!entry.isFile()) return false;
     const matchesExtension = extensions.some((ext) => entry.name.endsWith(ext));
     const matchesStateSlot = includeStateSlots && STATE_SLOT_PATTERN.test(entry.name);
     return matchesExtension || matchesStateSlot;

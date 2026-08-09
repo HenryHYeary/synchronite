@@ -21,6 +21,7 @@ function isWatchedFile(filePath: string, config: Config): boolean {
     const relative = path.relative(dirPath, filePath);
     return !relative.startsWith("..") && !path.isAbsolute(relative);
   })?.extensions;
+  if (additionalExtensions?.includes("*")) return true;
   let suffixes = [...FIXED_SUFFIXES];
   
   if (additionalExtensions) {
