@@ -1,5 +1,4 @@
 import { constructAllDirs, DirRecord, loadConfig } from "../config.js";
-import { DEFAULT_SAVE_SUFFIXES, DEFAULT_STATE_SUFFIXES } from "../state/index.js";
 
 export async function runListDirectories(): Promise<void> {
   const config = loadConfig();

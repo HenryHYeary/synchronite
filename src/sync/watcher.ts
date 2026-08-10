@@ -4,7 +4,7 @@ import path from "path";
 import { detectConflicts } from "./conflicts.js";
 import { downloadAndRecordFile } from "./remoteWatcher.js";
 import { Config, constructAllDirs, DirRecord, loadConfig } from "../config.js";
-import { DEFAULT_SAVE_SUFFIXES, DEFAULT_STATE_SUFFIXES, STATE_SLOT_PATTERN, generateIndex, loadIndex, removeFromIndex, saveIndex, SyncIndex, updateIndex } from "../state/index.js";
+import { STATE_SLOT_PATTERN, generateIndex, loadIndex, removeFromIndex, saveIndex, SyncIndex, updateIndex } from "../state/index.js";
 import { makeLocalRootMap, runRemoteSyncLoop } from "./remoteWatcher.js";
 import syncFile, { delay } from "./engine.js";
 // import { CloudAdapter } from "../cloud/adapter.js";
