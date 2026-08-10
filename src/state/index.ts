@@ -1,7 +1,7 @@
 import { APP_PATHS } from "../paths.js";
 import fs from "fs";
 import { computeDiskDerivedFields } from "./fileStats.js";
-import { Config, DirRecord, loadConfig } from "../config.js";
+import { Config, constructAllDirs, DirRecord, loadConfig } from "../config.js";
 import path from "path";
 
 
@@ -86,11 +86,7 @@ export async function generateIndex(config: Config): Promise<SyncIndex> {
 }
 
 function computeRemotePath(file: string, config: Config): string {
-  const watchedDirs = [
-    { path: config.retroarchSaveDir, label: "saves" },
-    { path: config.retroarchStateDir, label: "states" },
-    ...config.additionalDirs,
-  ];
+  const watchedDirs = constructAllDirs(config);
 
   for (const { path: dir, label } of watchedDirs) {
     const relative = path.relative(dir, file);

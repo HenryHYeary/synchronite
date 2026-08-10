@@ -3,7 +3,7 @@ import * as p from "@clack/prompts";
 import path from "path";
 import { detectConflicts } from "./conflicts.js";
 import { downloadAndRecordFile } from "./remoteWatcher.js";
-import { Config, DirRecord, loadConfig } from "../config.js";
+import { Config, constructAllDirs, DirRecord, loadConfig } from "../config.js";
 import { DEFAULT_SAVE_SUFFIXES, DEFAULT_STATE_SUFFIXES, STATE_SLOT_PATTERN, generateIndex, loadIndex, removeFromIndex, saveIndex, SyncIndex, updateIndex } from "../state/index.js";
 import { makeLocalRootMap, runRemoteSyncLoop } from "./remoteWatcher.js";
 import syncFile, { delay } from "./engine.js";
@@ -13,11 +13,7 @@ import { withPathLock } from "./pathLock.js";
 import { DropboxAdapter } from "../cloud/dropbox.js";
 
 function isWatchedFile(filePath: string, config: Config): boolean {
-  const watchedDirs: DirRecord[] = [
-    { path: config.retroarchSaveDir, label: "saves", extensions: DEFAULT_SAVE_SUFFIXES, includeStateSlots: false },
-    { path: config.retroarchStateDir, label: "states", extensions: DEFAULT_STATE_SUFFIXES, includeStateSlots: true },
-    ...config.additionalDirs,
-  ];
+  const watchedDirs: DirRecord[] = constructAllDirs(config);
 
   const matchingDir = watchedDirs.find(({ path: dirPath }) => {
     const relative = path.relative(dirPath, filePath);

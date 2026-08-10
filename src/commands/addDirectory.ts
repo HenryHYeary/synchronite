@@ -1,17 +1,13 @@
 import * as p from "@clack/prompts";
 import path from "path" ;
 import fs from "fs";
-import { Config, loadConfig } from "../config.js";
+import { Config, constructAllDirs, loadConfig } from "../config.js";
 import { APP_PATHS } from "../paths.js";
 
 export async function runAddDirectory(): Promise<void> {
   const config = loadConfig();
   const { retroarchSaveDir, retroarchStateDir, additionalDirs } = config
-  const watchedDirs = [
-    { path: retroarchSaveDir, label: "saves" },
-    { path: retroarchStateDir, label: "states" },
-    ...additionalDirs,
-  ]
+  const watchedDirs = constructAllDirs(config);
 
   const newDir = await p.text({
     message: "Directory to watch",
