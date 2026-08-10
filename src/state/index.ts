@@ -67,10 +67,7 @@ async function findFiles(
 }
 
 export async function generateIndex(config: Config): Promise<SyncIndex> {
-  const { retroarchSaveDir, retroarchStateDir, additionalDirs } = config;
-  const retroarchSaveDirRecord = { path: retroarchSaveDir, label: "saves", extensions: DEFAULT_SAVE_SUFFIXES, includeStateSlots: false, };
-  const retroarchStateDirRecord = { path: retroarchStateDir, label: "states", extensions: DEFAULT_STATE_SUFFIXES, includeStateSlots: true, } ;
-  const watchedDirs: DirRecord[] = [retroarchSaveDirRecord, retroarchStateDirRecord, ...additionalDirs];
+  const watchedDirs: DirRecord[] = constructAllDirs(config);
   const allPaths: string[][] = await Promise.all(
     watchedDirs.map(({ path, extensions, includeStateSlots }) => {
       return findFiles(path, extensions, includeStateSlots);
