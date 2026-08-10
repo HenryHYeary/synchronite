@@ -3,8 +3,8 @@ import * as p from "@clack/prompts";
 import path from "path";
 import { detectConflicts } from "./conflicts.js";
 import { downloadAndRecordFile } from "./remoteWatcher.js";
-import { Config, loadConfig } from "../config.js";
-import { generateIndex, loadIndex, removeFromIndex, saveIndex, SyncIndex, updateIndex } from "../state/index.js";
+import { Config, DirRecord, loadConfig } from "../config.js";
+import { DEFAULT_SAVE_SUFFIXES, DEFAULT_STATE_SUFFIXES, STATE_SLOT_PATTERN, generateIndex, loadIndex, removeFromIndex, saveIndex, SyncIndex, updateIndex } from "../state/index.js";
 import { makeLocalRootMap, runRemoteSyncLoop } from "./remoteWatcher.js";
 import syncFile, { delay } from "./engine.js";
 // import { CloudAdapter } from "../cloud/adapter.js";
@@ -12,26 +12,24 @@ import { SyncResult } from "./engine.js";
 import { withPathLock } from "./pathLock.js";
 import { DropboxAdapter } from "../cloud/dropbox.js";
 
-const FIXED_SUFFIXES = [".srm", ".sav", ".srm.bak", ".state", ".ps2", ".raw"];
-const STATE_SLOT_PATTERN = /\.state\d$/;
-
 function isWatchedFile(filePath: string, config: Config): boolean {
-  const { additionalDirs } = config;
-  const additionalExtensions = additionalDirs.find(({ path: dirPath }) => {
+  const watchedDirs: DirRecord[] = [
+    { path: config.retroarchSaveDir, label: "saves", extensions: DEFAULT_SAVE_SUFFIXES, includeStateSlots: false },
+    { path: config.retroarchStateDir, label: "states", extensions: DEFAULT_STATE_SUFFIXES, includeStateSlots: true },
+    ...config.additionalDirs,
+  ];
+
+  const matchingDir = watchedDirs.find(({ path: dirPath }) => {
     const relative = path.relative(dirPath, filePath);
     return !relative.startsWith("..") && !path.isAbsolute(relative);
-  })?.extensions;
-  if (additionalExtensions?.includes("*")) return true;
-  let suffixes = [...FIXED_SUFFIXES];
-  
-  if (additionalExtensions) {
-    suffixes = suffixes.concat(additionalExtensions);
-  }
+  });
 
-  return (
-    suffixes.some(suffix => filePath.endsWith(suffix)) ||
-    STATE_SLOT_PATTERN.test(filePath)
-  )
+  if (!matchingDir) return false;
+  if (matchingDir.extensions.includes("*")) return true;
+
+  const matchesExtension = matchingDir.extensions.some((ext) => filePath.endsWith(ext));
+  const matchesStateSlot = matchingDir.includeStateSlots && STATE_SLOT_PATTERN.test(filePath);
+  return matchesExtension || matchesStateSlot;
 }
 
 function determineStatuses(results: SyncResult[]) {

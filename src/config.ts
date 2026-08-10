@@ -2,12 +2,13 @@ import { z } from "zod";
 import fs from "fs";
 import { APP_PATHS } from "./paths.js";
 
-export const DirRecord = z.object({ path: z.string(), label: z.string(), extensions: z.array(z.string()).default([]) });
+export const DirRecordSchema = z.object({ path: z.string(), label: z.string(), extensions: z.array(z.string()).default([]), includeStateSlots: z.boolean().default(false), });
+export type DirRecord = z.infer<typeof DirRecordSchema>
 
 export const ConfigSchema = z.object({
   retroarchSaveDir: z.string(),
   retroarchStateDir: z.string(),
-  additionalDirs: z.array(DirRecord).default([]),
+  additionalDirs: z.array(DirRecordSchema).default([]),
   cloudProvider: z.enum(["s3", "gdrive", "dropbox"]),
   syncIntervalMs: z.number().positive().default(5000),
   modificationStrategy: z.enum(["latest-wins", "prompt"]).default("latest-wins"),

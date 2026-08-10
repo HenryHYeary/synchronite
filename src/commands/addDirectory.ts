@@ -1,7 +1,7 @@
 import * as p from "@clack/prompts";
 import path from "path" ;
 import fs from "fs";
-import { loadConfig } from "../config.js";
+import { Config, loadConfig } from "../config.js";
 import { APP_PATHS } from "../paths.js";
 
 export async function runAddDirectory(): Promise<void> {
@@ -58,9 +58,16 @@ export async function runAddDirectory(): Promise<void> {
 
   if (p.isCancel(extensions)) { p.cancel("Cancelled"); process.exit(0); }
 
-  const updatedConfig = {
+  const includesStateSlots = await p.confirm({
+    message: "Should this directory watch for state slots? (e.g. .state0, .state1, .state2)? [Y/N]",
+    initialValue: false
+  });
+
+  if (p.isCancel(includesStateSlots)) { p.cancel("Cancelled"); process.exit(0); }
+
+  const updatedConfig: Config = {
   ...config,
-  additionalDirs: [...config.additionalDirs, { path: path.resolve(newDir), label, extensions: extensions.split(",").map(s => s.trim()) }],
+  additionalDirs: [...config.additionalDirs, { path: path.resolve(newDir), label, extensions: extensions.split(",").map(s => s.trim()), includeStateSlots: !!includesStateSlots }],
 };
 
   fs.writeFileSync(APP_PATHS.config, JSON.stringify(updatedConfig, null, 2));

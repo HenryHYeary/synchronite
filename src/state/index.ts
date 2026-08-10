@@ -1,7 +1,7 @@
 import { APP_PATHS } from "../paths.js";
 import fs from "fs";
 import { computeDiskDerivedFields } from "./fileStats.js";
-import { Config, loadConfig } from "../config.js";
+import { Config, DirRecord, loadConfig } from "../config.js";
 import path from "path";
 
 
@@ -24,10 +24,10 @@ export interface IndexDiff {
   deleted: PathRecord[];
 }
 
-const SAVE_PATTERNS = [".srm", ".sav", ".srm.bak", ".ps2", ".raw", ".gci"];
-const STATE_PATTERNS = [".state"];
+export const DEFAULT_SAVE_SUFFIXES = [".srm", ".sav", ".srm.bak", ".ps2", ".raw", ".gci"];
+export const DEFAULT_STATE_SUFFIXES = [".state"];
 
-const STATE_SLOT_PATTERN = /\.state\d+$/;
+export const STATE_SLOT_PATTERN = /\.state\d+$/;
 
 export type SyncIndex = Record<string, FileRecord>
 
@@ -68,13 +68,14 @@ async function findFiles(
 
 export async function generateIndex(config: Config): Promise<SyncIndex> {
   const { retroarchSaveDir, retroarchStateDir, additionalDirs } = config;
-  const allPaths = await Promise.all([
-    findFiles(retroarchSaveDir, SAVE_PATTERNS),
-    findFiles(retroarchStateDir, STATE_PATTERNS),
-    ...additionalDirs.map((e: { path: string, label: string, extensions: string[] }) => {
-      return findFiles(e.path, e.extensions);
+  const retroarchSaveDirRecord = { path: retroarchSaveDir, label: "saves", extensions: DEFAULT_SAVE_SUFFIXES, includeStateSlots: false, };
+  const retroarchStateDirRecord = { path: retroarchStateDir, label: "states", extensions: DEFAULT_STATE_SUFFIXES, includeStateSlots: true, } ;
+  const watchedDirs: DirRecord[] = [retroarchSaveDirRecord, retroarchStateDirRecord, ...additionalDirs];
+  const allPaths: string[][] = await Promise.all(
+    watchedDirs.map(({ path, extensions, includeStateSlots }) => {
+      return findFiles(path, extensions, includeStateSlots);
     })
-  ]);
+  );
 
   let index = loadIndex();
   for (const p of allPaths.flat()) {
