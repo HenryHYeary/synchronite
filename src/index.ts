@@ -12,6 +12,7 @@ import { runAddDirectory } from "./commands/addDirectory.js";
 import { runListDirectories } from "./commands/listDirectories.js";
 import { runEditExtensions } from "./commands/editExtensions.js";
 import { runRemoveDirectory } from "./commands/removeDirectory.js";
+import { authenticate } from "./auth/oauth.js";
 
 const command = process.argv[2];
 
@@ -20,6 +21,8 @@ ensureAppDirs();
 async function main() {
   if (command == "init") {
     await runInit();
+  } else if (command === "auth") {
+    await authenticate();
   } else if (command === "add-directory") {
     await runAddDirectory();
   } else if (command === "list-directories") {
