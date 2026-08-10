@@ -10,6 +10,7 @@ import { Credentials, loadCredentials } from "./auth/credentials.js";
 import { runWatcher } from "./sync/watcher.js";
 import { runAddDirectory } from "./commands/addDirectory.js";
 import { runListDirectories } from "./commands/listDirectories.js";
+import { runEditExtensions } from "./commands/editExtensions.js";
 
 const command = process.argv[2];
 
@@ -22,6 +23,8 @@ async function main() {
     await runAddDirectory();
   } else if (command === "list-directories") {
     await runListDirectories();
+  } else if (command === "edit-extensions") {
+    await runEditExtensions();
   } else {
     if (!fs.existsSync(APP_PATHS.config)) {
       console.error("No config found. Run `synchronite init` first.");
