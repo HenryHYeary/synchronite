@@ -11,6 +11,7 @@ import { runWatcher } from "./sync/watcher.js";
 import { runAddDirectory } from "./commands/addDirectory.js";
 import { runListDirectories } from "./commands/listDirectories.js";
 import { runEditExtensions } from "./commands/editExtensions.js";
+import { runRemoveDirectory } from "./commands/removeDirectory.js";
 
 const command = process.argv[2];
 
@@ -25,6 +26,8 @@ async function main() {
     await runListDirectories();
   } else if (command === "edit-extensions") {
     await runEditExtensions();
+  } else if (command === "remove-directory") {
+    await runRemoveDirectory();
   } else {
     if (!fs.existsSync(APP_PATHS.config)) {
       console.error("No config found. Run `synchronite init` first.");
