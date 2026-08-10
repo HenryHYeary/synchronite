@@ -1,7 +1,6 @@
 import { APP_PATHS } from "../paths.js";
-import { ConfigSchema } from "../config.js";
+import { ConfigSchema, loadConfig } from "../config.js";
 import fs from "fs";
-import { loadConfig } from "../config.js";
 import * as p from "@clack/prompts";
 
 export async function runEditExtensions(): Promise<void> {
@@ -41,6 +40,8 @@ export async function runEditExtensions(): Promise<void> {
 
   if (p.isCancel(newExtensions)) { p.cancel("Cancelled"); process.exit(0) }
 
+  const extensions = newExtensions.split(",").map((e) => e.trim());
+
   const includeStateSlots = await p.confirm({
     message: "Should this directory watch for state slots? (e.g. .state0, .state1, .state2)",
     initialValue: currentDir!.includeStateSlots,
@@ -54,7 +55,7 @@ export async function runEditExtensions(): Promise<void> {
       dir.label === targetLabel
         ? {
             ...dir,
-            extensions: newExtensions.split(",").map((e) => e.trim()),
+            extensions,
             includeStateSlots,
           }
         : dir
@@ -68,5 +69,5 @@ export async function runEditExtensions(): Promise<void> {
   }
 
   fs.writeFileSync(APP_PATHS.config, JSON.stringify(result.data, null, 2));
-  p.outro("Directory updated. Restart Synchronite to pick up the change.");
+  p.outro("Directory updated. Restart synchronite to pick up the change.");
 }

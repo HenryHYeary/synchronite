@@ -1,6 +1,7 @@
 import { z } from "zod";
 import fs from "fs";
 import { APP_PATHS } from "./paths.js";
+import { DEFAULT_SAVE_SUFFIXES, DEFAULT_STATE_SUFFIXES } from "./state/index.js";
 
 export const DirRecordSchema = z.object({ path: z.string(), label: z.string(), extensions: z.array(z.string()).default([]), includeStateSlots: z.boolean().default(false), });
 export type DirRecord = z.infer<typeof DirRecordSchema>
@@ -27,4 +28,10 @@ export function loadConfig(filePath: string = APP_PATHS.config): Config {
   }
 
   return result.data;
+}
+
+export function constructAllDirs(config: Config): DirRecord[] {
+  const retroarchSaveDirRecord = { path: config.retroarchSaveDir, label: "saves", extensions: DEFAULT_SAVE_SUFFIXES, includeStateSlots: false };
+  const retroarchStateDirRecord = { path: config.retroarchStateDir, label: "states", extensions: DEFAULT_STATE_SUFFIXES, includeStateSlots: true };
+  return [retroarchSaveDirRecord, retroarchStateDirRecord, ...config.additionalDirs];
 }
