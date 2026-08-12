@@ -1,15 +1,28 @@
-import { Config } from "../config.js";
+import { Config, constructAllDirs, loadConfig } from "../config.js";
 import { DropboxAdapter } from "../cloud/dropbox.js";
 import { loadIndex, saveIndex, SyncIndex } from "../state/index.js";
 import { withPathLock } from "./pathLock.js";
 import { computeDiskDerivedFields } from "../state/fileStats.js";
 import path from "path";
+import { STATE_SLOT_PATTERN } from "../state/index.js";
 
 async function processRemoteChange(
   adapter: DropboxAdapter,
   entry: { path: string; contentHash: string },
   localRootMap: (remotePath: string) => string | null,
 ): Promise<void> {
+  const config = loadConfig();
+  const allDirs = constructAllDirs(config);
+  
+  const parts = entry.path.split("/").filter(Boolean);
+  const folderLabel = parts[0];
+  const matchingDir = allDirs.find((dir) => dir.label === folderLabel);
+
+  const isWatchedExt = matchingDir?.extensions.includes("*") || 
+    matchingDir?.extensions.some((e) => entry.path.endsWith(e)) ||
+    (matchingDir?.includeStateSlots && STATE_SLOT_PATTERN.test(entry.path))
+
+  if (!isWatchedExt) return;
   const localPath = localRootMap(entry.path);
   if (!localPath) return;
 
