@@ -10,6 +10,8 @@ export const ConfigSchema = z.object({
   retroarchSaveDir: z.string(),
   retroarchStateDir: z.string(),
   additionalDirs: z.array(DirRecordSchema).default([]),
+  additionalSaveExtensions: z.array(z.string()).default([]),
+  additionalStateExtensions: z.array(z.string()).default([]),
   cloudProvider: z.enum(["s3", "gdrive", "dropbox"]),
   syncIntervalMs: z.number().positive().default(5000),
   modificationStrategy: z.enum(["latest-wins", "prompt"]).default("latest-wins"),
@@ -31,7 +33,7 @@ export function loadConfig(filePath: string = APP_PATHS.config): Config {
 }
 
 export function constructAllDirs(config: Config): DirRecord[] {
-  const retroarchSaveDirRecord = { path: config.retroarchSaveDir, label: "saves", extensions: DEFAULT_SAVE_SUFFIXES, includeStateSlots: false };
-  const retroarchStateDirRecord = { path: config.retroarchStateDir, label: "states", extensions: DEFAULT_STATE_SUFFIXES, includeStateSlots: true };
+  const retroarchSaveDirRecord = { path: config.retroarchSaveDir, label: "saves", extensions: [...DEFAULT_SAVE_SUFFIXES, ...config.additionalSaveExtensions], includeStateSlots: false };
+  const retroarchStateDirRecord = { path: config.retroarchStateDir, label: "states", extensions: [...DEFAULT_STATE_SUFFIXES, ...config.additionalStateExtensions], includeStateSlots: true };
   return [retroarchSaveDirRecord, retroarchStateDirRecord, ...config.additionalDirs];
 }
