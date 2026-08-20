@@ -4,7 +4,7 @@ import fs from "fs";
 import { authenticate } from "../auth/oauth.js";
 import { getDefaultRetroarchPaths, Paths } from "../retroarch.js";
 import { APP_PATHS } from "../paths.js";
-import { ConfigSchema } from "../config.js";
+import { ConfigSchema, loadConfig } from "../config.js";
 
 export async function runInit(): Promise<void> {
   p.intro("Synchronite setup");
@@ -62,12 +62,15 @@ export async function runInit(): Promise<void> {
     process.exit(1);
   }
 
+  const existingConfig = fs.existsSync(APP_PATHS.config) ? loadConfig() : null;
+
   const config = {
+    ...existingConfig,
     retroarchSaveDir: path.resolve(saves),
     retroarchStateDir: path.resolve(states),
     cloudProvider: provider,
-    syncIntervalMs: 5000,
-    modificationStrategy: "latest-wins",
+    syncIntervalMs: existingConfig?.syncIntervalMs ?? 5000,
+    modificationStrategy: existingConfig?.modificationStrategy ?? "latest-wins",
   };
 
   const result = ConfigSchema.safeParse(config);
