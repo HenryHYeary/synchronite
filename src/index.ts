@@ -12,7 +12,7 @@ import { runAddDirectory } from "./commands/addDirectory.js";
 import { runListDirectories } from "./commands/listDirectories.js";
 import { runEditExtensions } from "./commands/editExtensions.js";
 import { runRemoveDirectory } from "./commands/removeDirectory.js";
-import { authenticate } from "./auth/oauth.js";
+import { runAuth } from "./commands/auth.js";
 import { runAddDefaultExtension } from "./commands/addDefaultExtension.js";
 import { runRemoveDefaultExtension } from "./commands/removeDefaultExtension.js";
 
@@ -24,7 +24,7 @@ async function main() {
   if (command == "init") {
     await runInit();
   } else if (command === "auth") {
-    await authenticate();
+    await runAuth();
   } else if (command === "add-directory") {
     await runAddDirectory();
   } else if (command === "list-directories") {
