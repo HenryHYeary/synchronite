@@ -13,9 +13,7 @@ export const ConfigSchema = z.object({
   additionalSaveExtensions: z.array(z.string()).default([]),
   additionalStateExtensions: z.array(z.string()).default([]),
   cloudProvider: z.enum(["s3", "gdrive", "dropbox"]),
-  syncIntervalMs: z.number().positive().default(5000),
-  modificationStrategy: z.enum(["latest-wins", "prompt"]).default("latest-wins"),
-  propagateDeletes: z.boolean().default(false),
+  syncIntervalMs: z.number().positive().default(5000),  propagateDeletes: z.boolean().default(false),
 });
 
 export type Config = z.infer<typeof ConfigSchema>;

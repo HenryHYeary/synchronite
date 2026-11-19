@@ -1,9 +1,9 @@
 import { APP_PATHS } from "../paths.js";
 import fs from "fs";
 import { ConfigSchema, loadConfig } from "../config.js";
-import path from "path";
 import * as p from "@clack/prompts";
 import { loadIndex, saveIndex, SyncIndex } from "../state/index.js";
+import { isInside } from "../validation.js";
 
 export async function runRemoveDirectory(): Promise<void> {
   const config = loadConfig();
@@ -35,9 +35,7 @@ export async function runRemoveDirectory(): Promise<void> {
   const index = loadIndex();
   const prunedIndex: SyncIndex = {};
   for (const [localPath, record] of Object.entries(index)) {
-    const relative = path.relative(targetDir.path, localPath);
-    const isInside = !relative.startsWith("..") && !path.isAbsolute(relative);
-    if (!isInside) prunedIndex[localPath] = record;
+    if (!isInside(targetDir.path, localPath)) prunedIndex[localPath] = record;
   }
   saveIndex(prunedIndex);
 

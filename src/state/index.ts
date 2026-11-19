@@ -2,6 +2,7 @@ import { APP_PATHS } from "../paths.js";
 import fs from "fs";
 import { computeDiskDerivedFields } from "./fileStats.js";
 import { Config, constructAllDirs, DirRecord, loadConfig } from "../config.js";
+import { isInside } from "../validation.js";
 import path from "path";
 
 
@@ -87,8 +88,7 @@ function computeRemotePath(file: string, config: Config): string {
 
   for (const { path: dir, label } of watchedDirs) {
     const relative = path.relative(dir, file);
-    const isInside = !relative.startsWith("..") && !path.isAbsolute(relative);
-    if (isInside) {
+    if (isInside(dir, file)) {
       const normalizedRelative = relative.split(path.sep).join("/");
       return `/${label}/${normalizedRelative}`;
     }

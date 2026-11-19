@@ -3,10 +3,11 @@ import path from "path" ;
 import fs from "fs";
 import { Config, constructAllDirs, loadConfig } from "../config.js";
 import { APP_PATHS } from "../paths.js";
+import { RESERVED_LABELS } from "../validation.js";
+import { isInside } from "../validation.js";
 
 export async function runAddDirectory(): Promise<void> {
   const config = loadConfig();
-  const { retroarchSaveDir, retroarchStateDir, additionalDirs } = config
   const watchedDirs = constructAllDirs(config);
 
   const newDir = await p.text({
@@ -34,8 +35,9 @@ export async function runAddDirectory(): Promise<void> {
     validate(value) {
       if (!value) return "Label is required";
       if (!/^[a-zA-Z0-9_-]+$/.test(value)) return "Use only letters, numbers, dashes, underscores";
-      if (value === "saves" || value === "states") return "That label is reserved";
-      if (watchedDirs.some(({ label: existingLabel }) => existingLabel === value)) return "That label is already in use";
+      const lower = value.toLowerCase();
+      if (RESERVED_LABELS.has(lower)) return "That label is reserved";
+      if (watchedDirs.some(({ label: existingLabel }) => existingLabel.toLowerCase() === lower)) return "That label is already in use";
     },
   });
 

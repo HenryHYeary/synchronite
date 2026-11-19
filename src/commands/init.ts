@@ -69,9 +69,7 @@ export async function runInit(): Promise<void> {
     retroarchSaveDir: path.resolve(saves),
     retroarchStateDir: path.resolve(states),
     cloudProvider: provider,
-    syncIntervalMs: existingConfig?.syncIntervalMs ?? 5000,
-    modificationStrategy: existingConfig?.modificationStrategy ?? "latest-wins",
-  };
+    syncIntervalMs: existingConfig?.syncIntervalMs ?? 5000,  };
 
   const result = ConfigSchema.safeParse(config);
 
