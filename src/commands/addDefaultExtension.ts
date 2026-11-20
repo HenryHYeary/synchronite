@@ -2,6 +2,7 @@ import * as p from "@clack/prompts";
 import fs from "fs";
 import { ConfigSchema, loadConfig } from "../config.js";
 import { APP_PATHS } from "../paths.js";
+import { validateExtensions } from "../validation.js";
 
 export async function runAddDefaultExtension(): Promise<void> {
   const config = loadConfig();
@@ -21,9 +22,8 @@ export async function runAddDefaultExtension(): Promise<void> {
   const newExt = await p.text({
     message: "What new extension would you like to add to this default directory? (comma separated, e.g. .json)",
     validate(value) {
-      if (!value) return "Additional extensions required";
-      if (!/\.[a-zA-Z0-9]+$/.test(value)) return "Invalid file extension (must start with a period)";
-      if (currAddExts.includes(value)) return "This extension is already watched in this directory.";
+      if (currAddExts.includes(value!)) return "This extension is already watched in this directory.";
+      return validateExtensions(value!);
     }
   });
 

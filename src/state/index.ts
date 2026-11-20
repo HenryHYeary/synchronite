@@ -2,7 +2,7 @@ import { APP_PATHS } from "../paths.js";
 import fs from "fs";
 import { computeDiskDerivedFields } from "./fileStats.js";
 import { Config, constructAllDirs, DirRecord, loadConfig } from "../config.js";
-import { isInside } from "../validation.js";
+import { isInside, matchesExtensions } from "../validation.js";
 import path from "path";
 
 
@@ -61,7 +61,7 @@ async function findFiles(
   }
   return entries.filter((entry) => {
     if (!entry.isFile()) return false;
-    const matchesExtension = extensions.some((ext) => entry.name.endsWith(ext));
+    const matchesExtension = matchesExtensions(entry.name, extensions);
     const matchesStateSlot = includeStateSlots && STATE_SLOT_PATTERN.test(entry.name);
     return matchesExtension || matchesStateSlot;
   }).map((entry) => path.resolve(entry.parentPath, entry.name));

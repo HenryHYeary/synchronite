@@ -11,6 +11,7 @@ import syncFile, { delay } from "./engine.js";
 import { SyncResult } from "./engine.js";
 import { withPathLock } from "./pathLock.js";
 import { DropboxAdapter } from "../cloud/dropbox.js";
+import { matchesExtensions } from "../validation.js";
 
 function isWatchedFile(filePath: string, config: Config): boolean {
   const watchedDirs: DirRecord[] = constructAllDirs(config);
@@ -21,9 +22,8 @@ function isWatchedFile(filePath: string, config: Config): boolean {
   });
 
   if (!matchingDir) return false;
-  if (matchingDir.extensions.includes("*")) return true;
 
-  const matchesExtension = matchingDir.extensions.some((ext) => filePath.endsWith(ext));
+  const matchesExtension = matchesExtensions(filePath, matchingDir.extensions);
   const matchesStateSlot = matchingDir.includeStateSlots && STATE_SLOT_PATTERN.test(filePath);
   return matchesExtension || matchesStateSlot;
 }

@@ -2,6 +2,7 @@ import { APP_PATHS } from "../paths.js";
 import { ConfigSchema, loadConfig } from "../config.js";
 import fs from "fs";
 import * as p from "@clack/prompts";
+import { validateExtensions } from "../validation.js";
 
 export async function runEditExtensions(): Promise<void> {
   const config = loadConfig();
@@ -29,12 +30,7 @@ export async function runEditExtensions(): Promise<void> {
     message: "File extensions to watch (comma-separated, e.g. .mcd,.mcr, or * for all files)",
     initialValue: currentDir?.extensions.join(","),
     validate(value) {
-      if (!value) return "Extensions are required.";
-      const exts = value.split(",").map((e) => e.trim());
-      if (exts.includes("*") && exts.length > 1) return "Use \"*\" on its own to watch all files, not combined with other extensions";
-      if (exts.includes("*")) return;
-      const invalid = exts.find((e) => !/^\.[a-zA-Z0-9]+$/.test(e));
-      if (invalid) return `Invalid extension: "${invalid} - each must start with a period, e.g. .mcd"`;
+      return validateExtensions(value!);
     }
   });
 

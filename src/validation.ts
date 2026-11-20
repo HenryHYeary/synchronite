@@ -28,6 +28,7 @@ export function validateDirectoryOverlap(
   lib: typeof path = path,
   caseInsensitive = defaultCaseSensitive,
 ): string | undefined {
+  if (!value) return "Directory required";
   const resolved = lib.resolve(value);
   for (const { path: e } of existing) {
     const re = lib.resolve(e);
@@ -40,6 +41,7 @@ export function validateDirectoryOverlap(
 export function validateExtensions(value: string): string | undefined {
   if (!value) return "Extensions are required";
   if (value.trim() === "*") return;
+  if (value.includes("*")) return "Use '*' on its own, not with other file extensions"
   if (value.endsWith(",")) return "Invalid extension";
   const invalid = value.split(",").map(e => e.trim()).find(e => !/^\.[a-zA-Z0-9]+$/.test(e));
   if (invalid) return `Invalid extension: "${invalid} - each must start with a period, e.g. .mcd"`;
