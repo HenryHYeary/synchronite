@@ -40,8 +40,9 @@ export function validateDirectoryOverlap(
 export function validateExtensions(value: string): string | undefined {
   if (!value) return "Extensions are required";
   if (value.trim() === "*") return;
+  if (value.endsWith(",")) return "Invalid extension";
   const invalid = value.split(",").map(e => e.trim()).find(e => !/^\.[a-zA-Z0-9]+$/.test(e));
-  if (invalid) return `Invalid extension "${invalid} - each must start with a period, e.g. .mcd`;
+  if (invalid) return `Invalid extension: "${invalid} - each must start with a period, e.g. .mcd"`;
 }
 
 export function matchesExtensions(fileName: string, extensions: string[]): boolean {

@@ -34,7 +34,7 @@ export async function runEditExtensions(): Promise<void> {
       if (exts.includes("*") && exts.length > 1) return "Use \"*\" on its own to watch all files, not combined with other extensions";
       if (exts.includes("*")) return;
       const invalid = exts.find((e) => !/^\.[a-zA-Z0-9]+$/.test(e));
-      if (invalid) return `Invalid extension: "${invalid}" - each must start with a period, e.g. .mcd`;
+      if (invalid) return `Invalid extension: "${invalid} - each must start with a period, e.g. .mcd"`;
     }
   });
 
