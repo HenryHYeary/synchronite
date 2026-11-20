@@ -1,39 +1,5 @@
 {
-  "name": "synchronite",
-  "version": "1.0.0",
-  "description": "Enables cloud save syncs in a device-agnostic format",
-  "main": "index.js",
-  "bin": {
-    "synchronite": "./dist/index.js"
-  },
-  "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "watch": "tsc -w",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/HenryHYeary/synchronite.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/HenryHYeary/synchronite/issues"
-  },
-  "homepage": "https://github.com/HenryHYeary/synchronite#readme",
-  "devDependencies": {
-    "@types/node": "^25.9.9",
-    "typescript": "^6.0.3",
-    "vitest": "^5.1.1"
-  },
-  "dependencies": {
-    "@clack/prompts": "^1.5.0",
-    "chokidar": "^5.0.0",
-    "env-paths": "^4.0.0",
-    "zod": "^4.4.3"
-  },
-  "type": "module"
+  "name": "synchronite-monorepo",
+  "private": true,
+  "workspaces": ["packages/*"]
 }
