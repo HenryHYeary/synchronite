@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
-import { ensureAppDirs, APP_PATHS } from "./paths.js";
-import { Config, loadConfig } from "./config.js";
+import { ensureAppDirs, APP_PATHS } from "@synchronite/core";
+import { Config, loadConfig } from "@synchronite/core";
 import { runInit } from "./commands/init.js";
 import fs from "fs";
-import { CloudAdapter } from "./cloud/adapter.js";
-import { DropboxAdapter } from "./cloud/dropbox.js";
-import { Credentials, loadCredentials } from "./auth/credentials.js";
-import { runWatcher } from "./sync/watcher.js";
+import { CloudAdapter } from "@synchronite/core";
+import { DropboxAdapter } from "@synchronite/core";
+import { Credentials, loadCredentials } from "@synchronite/core";
+import { runWatcher } from "@synchronite/core";
 import { runAddDirectory } from "./commands/addDirectory.js";
 import { runListDirectories } from "./commands/listDirectories.js";
 import { runEditExtensions } from "./commands/editExtensions.js";

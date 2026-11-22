@@ -1,4 +1,4 @@
-import { constructAllDirs, DirRecord, loadConfig } from "../config.js";
+import { constructAllDirs, DirRecord, loadConfig } from "@synchronite/core";
 
 export async function runListDirectories(): Promise<void> {
   const config = loadConfig();

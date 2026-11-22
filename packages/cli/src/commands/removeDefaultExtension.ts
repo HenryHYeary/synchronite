@@ -1,7 +1,7 @@
-import { ConfigSchema, loadConfig } from "../config.js";
+import { ConfigSchema, loadConfig } from "@synchronite/core";
 import fs from "fs";
 import * as p from "@clack/prompts";
-import { APP_PATHS } from "../paths.js";
+import { APP_PATHS } from "@synchronite/core";
 
 export async function runRemoveDefaultExtension(): Promise<void> {
   const config = loadConfig();

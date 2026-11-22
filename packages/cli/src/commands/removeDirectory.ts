@@ -1,9 +1,9 @@
-import { APP_PATHS } from "../paths.js";
+import { APP_PATHS } from "@synchronite/core";
 import fs from "fs";
-import { ConfigSchema, loadConfig } from "../config.js";
+import { ConfigSchema, loadConfig } from "@synchronite/core";
 import * as p from "@clack/prompts";
-import { loadIndex, saveIndex, SyncIndex } from "../state/index.js";
-import { isInside } from "../validation.js";
+import { loadIndex, saveIndex, SyncIndex } from "@synchronite/core";
+import { isInside } from "@synchronite/core";
 
 export async function runRemoveDirectory(): Promise<void> {
   const config = loadConfig();

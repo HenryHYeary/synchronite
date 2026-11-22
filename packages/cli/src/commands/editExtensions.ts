@@ -1,8 +1,8 @@
-import { APP_PATHS } from "../paths.js";
-import { ConfigSchema, loadConfig } from "../config.js";
+import { APP_PATHS } from "@synchronite/core";
+import { ConfigSchema, loadConfig } from "@synchronite/core";
 import fs from "fs";
 import * as p from "@clack/prompts";
-import { validateExtensions } from "../validation.js";
+import { validateExtensions } from "@synchronite/core";
 
 export async function runEditExtensions(): Promise<void> {
   const config = loadConfig();

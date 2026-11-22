@@ -1,8 +1,8 @@
 import * as p from "@clack/prompts";
 import fs from "fs";
-import { ConfigSchema, loadConfig } from "../config.js";
-import { APP_PATHS } from "../paths.js";
-import { validateExtensions } from "../validation.js";
+import { ConfigSchema, loadConfig } from "@synchronite/core";
+import { APP_PATHS } from "@synchronite/core";
+import { validateExtensions } from "@synchronite/core";
 
 export async function runAddDefaultExtension(): Promise<void> {
   const config = loadConfig();

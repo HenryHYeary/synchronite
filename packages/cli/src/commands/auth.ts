@@ -1,5 +1,5 @@
 import * as p from "@clack/prompts";
-import { authenticate } from "../auth/oauth.js";
+import { authenticate } from "@synchronite/core";
 
 export async function runAuth(): Promise<void> {
   const spinner = p.spinner();

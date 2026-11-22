@@ -1,9 +1,9 @@
 import * as p from "@clack/prompts";
 import path from "path" ;
 import fs, { watch } from "fs";
-import { Config, constructAllDirs, loadConfig } from "../config.js";
-import { APP_PATHS } from "../paths.js";
-import { validateLabel, validateDirectoryOverlap, validateExtensions } from "../validation.js";
+import { Config, constructAllDirs, loadConfig } from "@synchronite/core";
+import { APP_PATHS } from "@synchronite/core";
+import { validateLabel, validateDirectoryOverlap, validateExtensions } from "@synchronite/core";
 
 export async function runAddDirectory(): Promise<void> {
   const config = loadConfig();

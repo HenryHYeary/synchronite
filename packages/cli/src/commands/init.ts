@@ -1,10 +1,10 @@
 import * as p from "@clack/prompts";
 import path from "path";
 import fs from "fs";
-import { authenticate } from "../auth/oauth.js";
-import { getDefaultRetroarchPaths, Paths } from "../retroarch.js";
-import { APP_PATHS } from "../paths.js";
-import { ConfigSchema, loadConfig } from "../config.js";
+import { authenticate } from "@synchronite/core";
+import { getDefaultRetroarchPaths, Paths } from "@synchronite/core";
+import { APP_PATHS } from "@synchronite/core";
+import { ConfigSchema, loadConfig } from "@synchronite/core";
 
 export async function runInit(): Promise<void> {
   p.intro("Synchronite setup");
